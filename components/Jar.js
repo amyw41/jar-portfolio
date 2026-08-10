@@ -7,40 +7,68 @@ import { motion } from "framer-motion";
 
 // Each item's `top`/`left` are only the INITIAL spawn position (% of the jar
 // container) — once the physics sim takes over, real gravity/collision decide
-// where it actually rests. `size` is a fixed px bounding box; object-contain
-// keeps each item's own aspect ratio within that box. Physical properties are
-// my own judgment calls translating "what this object is" into density/
-// friction/restitution (e.g. the plush is soft & light so it jostles a lot and
-// barely bounces; the water bottle is the heaviest so it moves the least and
-// settles fastest) — nudge these if the feel is off.
+// where it actually rests. `size` is the tile's fixed px *width*; height is
+// derived everywhere below via ITEM_RATIO to match ProjectMedia.tsx's own
+// 662:510 rectangle (object-cover crops each item's media to that rectangle,
+// see the render loop below).
+//
+// One entry per real project (see lib/projects.ts) rather than padded back up
+// to a dozen by repeating — sparse is the deliberate choice here, not a
+// placeholder state. placeholder-4 (currently just a duplicate of Cybersea's
+// video) deliberately has no jar item — it'd visually duplicate the Cybersea
+// tile; revisit once a real 4th project exists.
+//
+// Physics values are uniform across all three, unlike the old personal-items
+// array (which hand-tuned density/friction/restitution per item because each
+// was a real physical object with a distinct shape/weight — a plush jostles
+// differently than a water bottle). That reasoning doesn't apply to flat
+// rectangular media tiles, so uniform values are correct here, not a shortcut.
 //
 // Array order is the back-to-front stacking order (DOM order = z-index, so
 // later entries render in front of earlier ones). `fallOrder` is a separate,
 // independent sequence — the order items drop into the jar during the entrance
-// animation — since which item lands first has nothing to do with which item
-// visually sits in front once everything's settled.
+// animation.
 //
-// Reconstructed from public/references/jar-hero.png (a low-res wireframe
-// export, not final assets) — a few background items are genuine guesses
-// where the wireframe only shows a sliver (kitty-mirror / bottle placement).
+// Rotation is intentionally left unlocked (unlike the old square-tile pass,
+// which locked it on all three because collisions spun the square tiles a
+// full 30-70°+ off their initial angle and that looked messy on tiles with
+// on-screen text/UI). Amy wants organic tumbling now — visual busyness is
+// explicitly not a concern — so collisions are free to torque these. Initial
+// `rotate` values are spread wide (rather than the old near-upright -8/5/-4)
+// so there's visible variety even before physics adds more.
 const ITEMS = [
-  // skullpanda + handcream sit at the back of the stack (drawn first = z-index
-  // lowest); digi sits at the very front. left values put skullpanda on the
-  // left, handcream in the middle, digi on the right — fallOrder is ordered
-  // to match (left-to-right entrance sweep for this trio).
-  { src: "/images/items/skullpanda.png", alt: "Skullpanda blind box charm", top: 70, left: 32, size: 187, rotate: 0, density: 0.0006, friction: 0.6, restitution: 0.15, frictionAir: 0.02, fallOrder: 9, lockRotation: true },
-  { src: "/images/items/handcream.png", alt: "L'Occitane hand cream tube", top: 96, left: 50, size: 187, rotate: 0, density: 0.0007, friction: 0.4, restitution: 0.25, frictionAir: 0.015, fallOrder: 10, lockRotation: true, bodyScale: 0.22 },
-  { src: "/images/items/kitty-mirror.png", alt: "Hello Kitty stand mirror", top: 74, left: 24, size: 187, rotate: 0, density: 0.001, friction: 0.3, restitution: 0.35, frictionAir: 0.01, fallOrder: 7, lockRotation: true },
-  { src: "/images/items/bingsu.png", alt: "Bingsu ice cream cup", top: 66, left: 48, size: 187, rotate: 0, density: 0.0009, friction: 0.4, restitution: 0.2, frictionAir: 0.015, fallOrder: 6 },
-  { src: "/images/items/hufflepuff.png", alt: "Hufflepuff patch", top: 60, left: 28, size: 187, rotate: 0, density: 0.0003, friction: 0.7, restitution: 0.1, frictionAir: 0.03, fallOrder: 8 },
-  { src: "/images/items/ballet.png", alt: "Ballet shoes", top: 93, left: 78, size: 187, rotate: 0, density: 0.0005, friction: 0.5, restitution: 0.15, frictionAir: 0.02, fallOrder: 0 },
-  { src: "/images/items/bottle.png", alt: "Pink water bottle", top: 74, left: 80, size: 187, rotate: 0, density: 0.002, friction: 0.35, restitution: 0.15, frictionAir: 0.008, fallOrder: 4, lockRotation: true },
-  { src: "/images/items/chips.png", alt: "Turtle Chips snack bag", top: 82, left: 32, size: 187, rotate: 0, density: 0.0004, friction: 0.5, restitution: 0.2, frictionAir: 0.025, fallOrder: 3 },
-  { src: "/images/items/pineapple.png", alt: "Pineapple drink can", top: 85, left: 20, size: 187, rotate: 0, density: 0.0016, friction: 0.25, restitution: 0.3, frictionAir: 0.008, fallOrder: 2 },
-  { src: "/images/items/kitty-plush.png", alt: "Hello Kitty plush toy", top: 77, left: 58, size: 187, rotate: 0, density: 0.0006, friction: 0.6, restitution: 0.15, frictionAir: 0.02, fallOrder: 5, lockRotation: true },
-  { src: "/images/items/laneige.png", alt: "Laneige lip balm tube", top: 92, left: 44, size: 187, rotate: 0, density: 0.0007, friction: 0.4, restitution: 0.25, frictionAir: 0.015, fallOrder: 1, lockRotation: true, bodyScale: 0.22 },
-  { src: "/images/items/digi.png", alt: "Digital camera with beaded strap", top: 88, left: 70, size: 187, rotate: 0, density: 0.0012, friction: 0.4, restitution: 0.2, frictionAir: 0.012, fallOrder: 11, lockRotation: true },
+  {
+    id: "cybersea",
+    src: "/images/projects/cybersea.mp4",
+    mediaType: "video",
+    alt: "Cybersea project thumbnail",
+    top: 74, left: 30, size: 160, rotate: -25,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 0,
+  },
+  {
+    id: "skinsprout",
+    src: "/images/projects/skinsprout.mp4",
+    mediaType: "video",
+    alt: "SkinSprout project thumbnail",
+    top: 70, left: 48, size: 160, rotate: 35,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 1,
+  },
+  {
+    id: "spotify",
+    src: "/images/projects/spotify.png",
+    mediaType: "image",
+    alt: "Spotify project thumbnail",
+    top: 80, left: 66, size: 160, rotate: -15,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 2,
+  },
 ];
+
+// Matches ProjectMedia.tsx's own 662:510 media ratio — item.size is treated
+// as width everywhere, height is always item.size * ITEM_RATIO.
+const ITEM_RATIO = 510 / 662;
 
 // Fraction of the jar container's own box (0-1). Approximates the lower body
 // of the hand-drawn glass outline as a few straight wall segments — jar.png is
@@ -66,7 +94,7 @@ const RUSTLE_FOLLOW = 0.00018; // how much the pointer's own velocity gets impar
 const MAX_POINTER_SPEED = 25; // px/tick — caps sudden fast-mouse-move spikes so a quick swipe doesn't fling items out
 const BODY_SCALE = 0.36; // fraction of item.size used as the collision hitbox — much smaller than the rendered image so the pile packs down tightly enough to fit under the jar's rim
 
-// item.size values (180px) are tuned against the container's own max-w-[380px]
+// item.size values (160px) are tuned against the container's own max-w-[380px]
 // design reference. Below that width the container itself shrinks (w-full),
 // but a raw item.size wouldn't — items would keep rendering at full size and
 // visually spill past the (now smaller) jar outline. Scaling every item.size
@@ -122,33 +150,33 @@ export default function Jar() {
     const spawnY = new Array(ITEMS.length);
     let spawnCursor = 40 * scale;
     [...ITEMS.keys()].sort((a, b) => ITEMS[a].fallOrder - ITEMS[b].fallOrder).forEach((i) => {
-      const size = ITEMS[i].size * scale;
-      spawnY[i] = -(spawnCursor + size / 2);
-      spawnCursor += size + 30 * scale;
+      const height = ITEMS[i].size * scale * ITEM_RATIO;
+      spawnY[i] = -(spawnCursor + height / 2);
+      spawnCursor += height + 30 * scale;
     });
     const targetX = ITEMS.map((item) => (item.left / 100) * width);
-    // Both "half" values are constant for the component's lifetime — precomputed
-    // once here instead of recomputed every tick (collisionHalf is the physics
-    // hitbox half-size; visualHalf is half the rendered, on-screen image size,
-    // always item.size*scale/2 regardless of bodyScale).
-    const collisionHalf = ITEMS.map((item) => item.size * scale * ((item.bodyScale ?? BODY_SCALE) / 2));
-    const visualHalf = ITEMS.map((item) => (item.size * scale) / 2);
+    // These "half" values are constant for the component's lifetime —
+    // precomputed once here instead of recomputed every tick. collisionHalfW/H
+    // are the physics hitbox half-width/height; visualHalfW/H are half the
+    // rendered, on-screen tile width/height, always item.size*scale/2 (and
+    // its height equivalent) regardless of bodyScale.
+    const collisionHalfW = ITEMS.map((item) => item.size * scale * ((item.bodyScale ?? BODY_SCALE) / 2));
+    const collisionHalfH = ITEMS.map((item) => item.size * scale * ITEM_RATIO * ((item.bodyScale ?? BODY_SCALE) / 2));
+    const visualHalfW = ITEMS.map((item) => (item.size * scale) / 2);
+    const visualHalfH = ITEMS.map((item) => (item.size * scale * ITEM_RATIO) / 2);
     const bodies = ITEMS.map((item, i) => {
       const bodyScale = item.bodyScale ?? BODY_SCALE;
-      const hitboxSize = item.size * scale * bodyScale;
-      const body = Matter.Bodies.rectangle(targetX[i], spawnY[i], hitboxSize, hitboxSize, {
+      const hitboxW = item.size * scale * bodyScale;
+      const hitboxH = item.size * scale * ITEM_RATIO * bodyScale;
+      const body = Matter.Bodies.rectangle(targetX[i], spawnY[i], hitboxW, hitboxH, {
         density: item.density,
         friction: item.friction,
         restitution: item.restitution,
         frictionAir: item.frictionAir,
         angle: (item.rotate * Math.PI) / 180,
-        chamfer: { radius: hitboxSize * 0.4 },
+        chamfer: { radius: Math.min(hitboxW, hitboxH) * 0.4 },
       });
       body.itemIndex = i;
-      // Infinite inertia means collisions can still push the body around, but
-      // can no longer torque it — it holds the angle it was created at instead
-      // of spinning (which is how the mirror ended up tumbling endlessly).
-      if (item.lockRotation) Matter.Body.setInertia(body, Infinity);
       return body;
     });
     bodiesRef.current = bodies;
@@ -160,9 +188,8 @@ export default function Jar() {
     // paint of the physics-driven transform below.
     itemElRefs.current.forEach((el, i) => {
       if (!el) return;
-      const px = `${ITEMS[i].size * scale}px`;
-      el.style.width = px;
-      el.style.height = px;
+      el.style.width = `${ITEMS[i].size * scale}px`;
+      el.style.height = `${ITEMS[i].size * scale * ITEM_RATIO}px`;
     });
 
     // Every item drops straight down its assigned column (x pinned, see the
@@ -229,14 +256,15 @@ export default function Jar() {
         const rightBound = currentWalls[1].bounds.min.x;
         const floorBound = currentWalls[2].bounds.min.y;
         bodies.forEach((body, i) => {
-          const half = collisionHalf[i];
+          const halfW = collisionHalfW[i];
+          const halfH = collisionHalfH[i];
           let { x, y } = body.position;
           let vx = body.velocity.x;
           let vy = body.velocity.y;
           let clamped = false;
-          if (x - half < leftBound) { x = leftBound + half; vx = Math.max(vx, 0); clamped = true; }
-          if (x + half > rightBound) { x = rightBound - half; vx = Math.min(vx, 0); clamped = true; }
-          if (y + half > floorBound) { y = floorBound - half; vy = Math.min(vy, 0); clamped = true; }
+          if (x - halfW < leftBound) { x = leftBound + halfW; vx = Math.max(vx, 0); clamped = true; }
+          if (x + halfW > rightBound) { x = rightBound - halfW; vx = Math.min(vx, 0); clamped = true; }
+          if (y + halfH > floorBound) { y = floorBound - halfH; vy = Math.min(vy, 0); clamped = true; }
           if (clamped) {
             Matter.Body.setPosition(body, { x, y });
             Matter.Body.setVelocity(body, { x: vx, y: vy });
@@ -273,8 +301,13 @@ export default function Jar() {
         bodies.forEach((body, i) => {
           const el = itemElRefs.current[i];
           if (!el) return;
-          const half = visualHalf[i];
-          el.style.transform = `translate(${body.position.x - half}px, ${body.position.y - half}px) rotate(${body.angle}rad)`;
+          const halfW = visualHalfW[i];
+          const halfH = visualHalfH[i];
+          el.style.transform = `translate(${body.position.x - halfW}px, ${body.position.y - halfH}px) rotate(${body.angle}rad)`;
+          // Live z-index (not the array's fixed DOM order) so whichever tile
+          // is physically lower/further-forward in the pile also paints on
+          // top — recomputed every frame, cheap enough at only 3 bodies.
+          el.style.zIndex = Math.round(body.position.y);
         });
       } catch (err) {
         console.error("Jar animation frame failed, recovering:", err);
@@ -328,9 +361,8 @@ export default function Jar() {
       const newScale = Math.min(r.width / REFERENCE_WIDTH, 1);
       itemElRefs.current.forEach((el, i) => {
         if (!el) return;
-        const px = `${ITEMS[i].size * newScale}px`;
-        el.style.width = px;
-        el.style.height = px;
+        el.style.width = `${ITEMS[i].size * newScale}px`;
+        el.style.height = `${ITEMS[i].size * newScale * ITEM_RATIO}px`;
       });
     };
     const resizeObserver = new ResizeObserver(onResize);
@@ -414,19 +446,30 @@ export default function Jar() {
         />
         {ITEMS.map((item, i) => (
           <div
-            key={item.src}
+            key={item.id}
             ref={(el) => { itemElRefs.current[i] = el; }}
             className="absolute left-0 top-0 will-change-transform"
-            style={{ width: `${item.size}px`, height: `${item.size}px` }}
+            style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px` }}
           >
-            <Image
-              src={item.src}
-              alt={item.alt}
-              width={1200}
-              height={1280}
-              draggable={false}
-              className="h-full w-full select-none object-contain"
-            />
+            {item.mediaType === "video" ? (
+              <video
+                src={item.src}
+                muted
+                loop
+                playsInline
+                autoPlay
+                className="pointer-events-none h-full w-full select-none rounded-md object-cover"
+              />
+            ) : (
+              <Image
+                src={item.src}
+                alt={item.alt}
+                width={1200}
+                height={1280}
+                draggable={false}
+                className="pointer-events-none h-full w-full select-none rounded-md object-cover"
+              />
+            )}
           </div>
         ))}
       </div>

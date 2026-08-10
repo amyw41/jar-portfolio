@@ -1,96 +1,97 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
-import { WHATS_INSIDE_ITEMS, type WhatsInsideItem } from "@/lib/items";
-import StarBadge from "./StarBadge";
+import { useRouter } from "next/navigation";
+import { PORTFOLIO_PROJECTS, type PortfolioProject } from "@/lib/projects";
+import ProjectMedia from "./ProjectMedia";
+import ProjectCardText from "./ProjectCardText";
 
-// Card padding + image size step up together across breakpoints (p-4/192px
-// at base up to p-9/288px at xl) — the original fixed p-9 + 256-288px image
-// only ever fit comfortably on wide desktop viewports; at grid-cols-1 on a
-// 320-375px phone it alone exceeded the available width. Each tier below is
-// sized to fit its narrowest viewport with real margin, not just eyeballed.
+// The media itself is the card — no background box, no padding frame around
+// it. ProjectMedia's own rounded-md is the only visual framing. Card width
+// comes entirely from the grid cell (w-full), not a fixed rem size: at the
+// 2-column desktop tier that cell is exactly 662px (see Gallery's own
+// max-w-[1374px]/gap-[50px] math below), matching ProjectMedia's 662:510
+// design ratio exactly.
 function GalleryCard({
-  item,
+  project,
   column,
-  lit,
-  onToggleLit,
 }: {
-  item: WhatsInsideItem;
+  project: PortfolioProject;
   column: number;
-  lit: boolean;
-  onToggleLit: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
+  const router = useRouter();
 
   return (
+    // div with role="button", not an actual <button> — matches Carousel's
+    // own reasoning: role + onClick + onKeyDown reproduces native button
+    // semantics (click + Enter/Space activation, tab stop).
     <motion.div
+      role="button"
+      onClick={() => router.push(`/projects/${project.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(`/projects/${project.id}`);
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
       tabIndex={0}
+      aria-label={`Open ${project.name}`}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, ease: "easeOut", delay: column * 0.08 }}
-      className="relative flex flex-col items-center rounded-2xl p-3 xl:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2460A4]"
+      className="relative flex cursor-pointer flex-col items-start rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2460A4]"
     >
+      {/* Media and text dim together, to 50%, on hover. No hover-scale-zoom
+          here (unlike the old items design this inherited it from) — with
+          media now filling the grid cell edge-to-edge (w-full, no padding
+          cushion), zooming it on hover would overflow into the 50px gap and
+          overlap the neighboring card. */}
       <motion.div
-        animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.6 }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="absolute right-[1.125rem] top-[1.125rem]"
-      >
-        <StarBadge size={42} iconSize={21} lit={lit} onToggle={onToggleLit} />
-      </motion.div>
-
-      <motion.div
-        animate={{ opacity: hovered ? 1 : 0.5, scale: hovered ? 1.15 : 1.12 }}
+        animate={{ opacity: hovered ? 0.5 : 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 15 }}
-        className="relative h-[9.6rem] w-[9.6rem] sm:h-[11.2rem] sm:w-[11.2rem] lg:h-[12.8rem] lg:w-[12.8rem] xl:h-[14.4rem] xl:w-[14.4rem]"
+        className="w-full"
       >
-        <Image
-          src={item.image}
-          alt={item.name}
-          fill
-          sizes="(min-width: 1280px) 230px, (min-width: 1024px) 205px, (min-width: 640px) 179px, 154px"
-          draggable={false}
-          className="select-none object-contain"
-        />
+        <ProjectMedia project={project} sizes="(min-width: 640px) 45vw, 90vw" />
       </motion.div>
 
-      <motion.div
-        initial={false}
-        animate={{ opacity: hovered ? 1 : 0.5, y: hovered ? 0 : 8 }}
-        transition={{ duration: 0.2 }}
-        className="mt-9 text-center"
-      >
-        <p className="max-w-[270px] font-roboto text-base text-gray-500">
-          {item.description}
-        </p>
-      </motion.div>
+      <div className="mt-3">
+        <ProjectCardText
+          name={project.name}
+          description={project.description}
+          opacity={hovered ? 0.5 : 1}
+          nameFontSize={34}
+          descriptionFontSize={20}
+        />
+      </div>
     </motion.div>
   );
 }
 
-export default function Gallery({
-  litItems,
-  onToggleLit,
-}: {
-  litItems: Set<string>;
-  onToggleLit: (id: string) => void;
-}) {
+export default function Gallery() {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {WHATS_INSIDE_ITEMS.map((item, i) => (
-        <GalleryCard
-          key={item.id}
-          item={item}
-          column={i % 3}
-          lit={litItems.has(item.id)}
-          onToggleLit={() => onToggleLit(item.id)}
-        />
+    // w-[90.87%] + max-w-[1374px]: at Amy's 1512px reference viewport,
+    // 90.87% of 1512 ≈ 1374px, so the two constraints meet exactly there —
+    // below that width the grid scales down proportionally with the
+    // viewport; above it, the max-w cap holds it at 1374px instead of
+    // growing unbounded. This is now the *only* thing driving Gallery's
+    // width — nothing above it in WhatsInside/index.tsx overrides it, so
+    // this cap is actually reachable on a wide monitor instead of being
+    // trapped inside Carousel's smaller shared wrapper (the bug this
+    // "fix portfolio responsiveness" prompt exists to fix). gap-[50px]
+    // (both axes) + 2 columns is what makes each card's media land on
+    // exactly 662px wide at that reference width: (1374 - 50) / 2 = 662,
+    // matching ProjectMedia's own 662:510 ratio. grid-cols-1 sm:grid-cols-2
+    // — 2 columns is the ceiling at every width, no lg:grid-cols-3 tier.
+    <div className="mx-auto grid w-[90.87%] max-w-[1374px] grid-cols-1 gap-[50px] sm:grid-cols-2">
+      {PORTFOLIO_PROJECTS.map((project, i) => (
+        <GalleryCard key={project.id} project={project} column={i % 2} />
       ))}
     </div>
   );

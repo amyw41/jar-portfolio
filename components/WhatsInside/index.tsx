@@ -4,7 +4,6 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Gallery from "./Gallery";
 import Carousel from "./Carousel";
-import { computeLayout, useViewportWidth } from "./layout";
 
 type View = "carousel" | "gallery";
 
@@ -15,26 +14,6 @@ const VIEWS: { id: View; label: string }[] = [
 
 export default function WhatsInside() {
   const [view, setView] = useState<View>("carousel");
-  // Carousel's own arrow-to-arrow span is the shared width source of truth —
-  // Gallery is sized to match it (rather than the other way around) so
-  // switching views never changes the section's overall width.
-  const viewportWidth = useViewportWidth();
-  const { totalWidth } = computeLayout(viewportWidth);
-
-  // Which items' star badges are "lit" (yellow) — lives here, above both
-  // views, rather than inside Carousel/Gallery individually, so starring an
-  // item in one view still shows it starred after switching to the other
-  // (they're the same underlying item, just two different presentations of
-  // it). Keyed by item id, not index, so it stays correct regardless of
-  // ordering in either view.
-  const [litItems, setLitItems] = useState<Set<string>>(new Set());
-  const toggleLit = (id: string) =>
-    setLitItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   return (
     // pt-36/pb-36 are equal on purpose: this section is self-contained, like
@@ -77,13 +56,21 @@ export default function WhatsInside() {
         </div>
       </motion.div>
 
+      {/* No longer locked to Carousel's own arrow-to-arrow width — each view
+          now sizes itself independently (Gallery caps at 1374px via its own
+          max-w-*, Carousel sizes from computeLayout) and is simply centered
+          within this full-width wrapper via its own internal mx-auto. The
+          two views intentionally end up different widths; forcing them
+          equal would mean either shrinking Gallery's now much-larger spec
+          size or blowing Carousel up to match it (crowding its neighbors/
+          arrows off-screen) — flagged as a deliberate call, not an
+          oversight, in the "fix portfolio visuals" prompt. */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-        className="mx-auto mt-26"
-        style={{ width: totalWidth, maxWidth: "100%" }}
+        className="mx-auto mt-26 w-full"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -94,11 +81,7 @@ export default function WhatsInside() {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className={view === "gallery" ? "mt-[2px]" : undefined}
           >
-            {view === "gallery" ? (
-              <Gallery litItems={litItems} onToggleLit={toggleLit} />
-            ) : (
-              <Carousel litItems={litItems} onToggleLit={toggleLit} />
-            )}
+            {view === "gallery" ? <Gallery /> : <Carousel />}
           </motion.div>
         </AnimatePresence>
       </motion.div>
