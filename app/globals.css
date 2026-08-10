@@ -1,8 +1,29 @@
 @import "tailwindcss";
 
+/* Smooth anchor/hash scrolling site-wide — what makes the taskbar's "Work"
+   link slide down to the projects section instead of jumping instantly. */
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Default: Public Sans (the loaded web font) everywhere. */
+  --font-body: var(--font-public-sans), sans-serif;
+}
+
+/* `font: -apple-system-body` is only a recognized value in Safari/WebKit on
+   Apple's own platforms (Mac + iOS) — every other browser/OS ignores this
+   whole block, which is exactly the real-device check Amy asked for (not
+   just "does this keyword happen to fall through unused"). Inside it, swap
+   to the actual SF Pro Display system font and drop the Public-Sans-only
+   tracking fix below, since SF Pro's own default spacing is already normal. */
+@supports (font: -apple-system-body) {
+  :root {
+    --font-body: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 }
 
 @theme inline {
@@ -11,12 +32,22 @@
   --font-singsong: var(--font-singsong);
   --font-instrument: var(--font-instrument);
   --font-instrument-sans: var(--font-instrument-sans);
-  --font-roboto: var(--font-roboto);
+  --font-body: var(--font-body);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Public Sans ships noticeably looser than the tracking Amy wants by
+     default — this pulls letters back in. Only applies on non-Apple
+     platforms; SF Pro Display (below) keeps its own normal spacing. */
+  letter-spacing: -0.025em;
+}
+
+@supports (font: -apple-system-body) {
+  body {
+    letter-spacing: normal;
+  }
 }
 
 @keyframes marquee {

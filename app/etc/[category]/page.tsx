@@ -355,7 +355,7 @@ export default function EtcCategoryPage() {
             >
               {/* Sits just above the plate; scales down together with it
                   since it lives inside the same scaled wrapper. */}
-              <p className="absolute inset-x-0 -top-6 font-roboto text-sm text-gray-400">Coming soon.</p>
+              <p className="absolute inset-x-0 -top-6 font-body text-sm text-gray-400">Coming soon.</p>
               <div
                 className="absolute left-1/2 -translate-x-1/2 overflow-hidden"
                 style={{ top: 0, width: plateSize, height: plateVisibleHeight }}
@@ -640,7 +640,7 @@ export default function EtcCategoryPage() {
                   style={{ maxHeight: "70vh", maxWidth: "100%" }}
                   sizes="700px"
                 />
-                <p className="mt-2 text-left font-roboto text-xs text-gray-500">{selected.caption}</p>
+                <p className="mt-2 text-left font-body text-xs text-gray-500">{selected.caption}</p>
               </div>
             </motion.div>
           </motion.div>

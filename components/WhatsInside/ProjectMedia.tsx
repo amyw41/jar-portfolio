@@ -25,7 +25,7 @@ export default function ProjectMedia({
   className?: string;
 }) {
   return (
-    <div className={`relative aspect-[662/510] w-full overflow-hidden rounded-md ${className}`}>
+    <div className={`relative aspect-[662/510] w-full overflow-hidden rounded-md border border-gray-200 ${className}`}>
       {project.mediaType === "video" ? (
         // Autoplay-muted-loop — the lower-friction default for a portfolio
         // grid, reads like a GIF with no click needed. playsInline keeps it

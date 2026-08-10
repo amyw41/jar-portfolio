@@ -35,10 +35,31 @@ const ITEM_SIZE_CEILING = MAX_ITEM_SIZE;
 // below) — without it these numbers would only be right pre-transform.
 const CENTER_NAME_RATIO = 34 / (ITEM_SIZE_CEILING * CENTER_SCALE);
 const CENTER_DESC_RATIO = 20 / (ITEM_SIZE_CEILING * CENTER_SCALE);
+// How many slots on each side of center get a rendered (if invisible past
+// dist 1) element — 2 matches the original three visible tiers (center,
+// near neighbor, far/invisible peek). See the `slots` comment below for why
+// this window, not a per-item "closest real project" lookup, is what
+// actually drives motion now.
+const WINDOW_RADIUS = 2;
 
 export default function Carousel() {
   const router = useRouter();
-  const [index, setIndex] = useState(0);
+  // `step` is unbounded — it just counts how many single-slot advances
+  // you've made in total, positive or negative, and is never wrapped back
+  // into 0..PROJECT_COUNT-1. That's the whole fix for the old "one item
+  // suddenly sweeps/snaps to the opposite side" bug: the old code derived
+  // each item's on-screen offset independently, as "shortest path from the
+  // wrapped index to this item" — which is correct in isolation, but as the
+  // wrapped index ticks over, the *shortest* path for whichever item sits
+  // near the halfway point can flip from one side to the other in a single
+  // step, and that one item visibly jumps across the whole track while
+  // everything else slides normally. Driving every item's position from
+  // one shared, monotonic `step` instead means there's only ever one
+  // motion happening — the whole belt shifts by exactly one slot, in one
+  // direction, together — because no individual item ever recomputes which
+  // side it's "closer" to; see `slots` below.
+  const [step, setStep] = useState(0);
+  const centerIndex = ((step % PROJECT_COUNT) + PROJECT_COUNT) % PROJECT_COUNT;
   // Which card (by id) is currently hovered/focused — only ever changes the
   // centered card's own media/text opacity (see mediaOpacity/textOpacity
   // below); a hovered neighbor doesn't dim, since only the centered card is
@@ -48,19 +69,34 @@ export default function Carousel() {
   const { itemSize, imageSize, spacing, containerWidth, gap, totalWidth } = computeLayout(viewportWidth, ITEM_SIZE_CEILING);
   const trackHeight = itemSize * TRACK_HEIGHT_RATIO;
 
-  // Wraps so the carousel loops infinitely: index -1 becomes the last item,
-  // index PROJECT_COUNT becomes the first.
-  const goTo = (i: number) => setIndex(((i % PROJECT_COUNT) + PROJECT_COUNT) % PROJECT_COUNT);
-
-
-  // Shortest signed distance from `index` to `i` around the loop, e.g. with 9
-  // items, the item right after the last one is offset +1 from it (not -8) so
-  // it slides in from the correct side instead of snapping across the screen.
-  const wrappedOffset = (i: number) => {
-    let diff = ((i - index) % PROJECT_COUNT + PROJECT_COUNT) % PROJECT_COUNT;
-    if (diff > PROJECT_COUNT / 2) diff -= PROJECT_COUNT;
-    return diff;
+  const goBy = (delta: number) => setStep((s) => s + delta);
+  // Only the dot indicators need this — they can jump straight to any
+  // project, potentially several slots away, so picking the shorter
+  // direction around the loop makes sense there. The arrows/neighbor clicks
+  // never need it: they only ever move by exactly one slot (see the render
+  // loop below), so there's no "which direction" choice to make in the
+  // first place.
+  const goToProject = (targetIndex: number) => {
+    let delta = ((targetIndex - centerIndex) % PROJECT_COUNT + PROJECT_COUNT) % PROJECT_COUNT;
+    if (delta > PROJECT_COUNT / 2) delta -= PROJECT_COUNT;
+    goBy(delta);
   };
+
+  // Every integer `k` within WINDOW_RADIUS of `step` gets its own rendered
+  // slot, mapped onto a real project by `k mod PROJECT_COUNT` — `k` itself
+  // (not "whichever project this currently is") is each element's stable
+  // identity (see `key={k}` below). As `step` changes, a given k's own
+  // on-screen offset (`k - step`) changes by exactly the same amount as
+  // every other k's — that uniform, shared delta is what makes the whole
+  // belt read as one consistent sliding motion. (With PROJECT_COUNT smaller
+  // than the window's full span, the same project can occupy two slots at
+  // once — but only ever at the two farthest, already-invisible dist-2
+  // positions, never anywhere visible, so it's harmless.)
+  const slots = [];
+  for (let k = step - WINDOW_RADIUS; k <= step + WINDOW_RADIUS; k++) {
+    const projectIndex = ((k % PROJECT_COUNT) + PROJECT_COUNT) % PROJECT_COUNT;
+    slots.push({ k, project: PORTFOLIO_PROJECTS[projectIndex] });
+  }
 
   return (
     // Sized to Carousel's own arrow-to-arrow width (totalWidth, the same
@@ -87,7 +123,7 @@ export default function Carousel() {
       >
         <button
           type="button"
-          onClick={() => goTo(index - 1)}
+          onClick={() => goBy(-1)}
           aria-label="Previous project"
           className={ARROW_BUTTON_CLASS}
         >
@@ -119,8 +155,8 @@ export default function Carousel() {
               (viewportWidth already nonzero either way) don't remount, so
               they animate smoothly instead of popping. */}
           <motion.div key={viewportWidth === 0 ? "measuring" : "ready"} className="absolute inset-0">
-            {PORTFOLIO_PROJECTS.map((project, i) => {
-              const offset = wrappedOffset(i);
+            {slots.map(({ k, project }) => {
+              const offset = k - step;
               const dist = Math.abs(offset);
               const isCenter = dist === 0;
               const isHovered = hoveredId === project.id;
@@ -143,12 +179,12 @@ export default function Carousel() {
                 // (click + Enter/Space activation, tab stop).
                 <motion.div
                   role="button"
-                  key={project.id}
-                  onClick={() => (isCenter ? router.push(`/projects/${project.id}`) : goTo(i))}
+                  key={k}
+                  onClick={() => (isCenter ? router.push(`/projects/${project.id}`) : goBy(offset))}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      isCenter ? router.push(`/projects/${project.id}`) : goTo(i);
+                      isCenter ? router.push(`/projects/${project.id}`) : goBy(offset);
                     }
                   }}
                   onMouseEnter={() => setHoveredId(project.id)}
@@ -197,7 +233,7 @@ export default function Carousel() {
 
         <button
           type="button"
-          onClick={() => goTo(index + 1)}
+          onClick={() => goBy(1)}
           aria-label="Next project"
           className={ARROW_BUTTON_CLASS}
         >
@@ -210,9 +246,9 @@ export default function Carousel() {
           <button
             key={project.id}
             type="button"
-            onClick={() => goTo(i)}
+            onClick={() => goToProject(i)}
             aria-label={`Go to ${project.name}`}
-            className={`rounded-full border transition-all ${i === index
+            className={`rounded-full border transition-all ${i === centerIndex
               ? "h-[1.125rem] w-[1.125rem] border-[#2460A4] bg-[#2460A4]"
               : "h-[0.9375rem] w-[0.9375rem] border-black/50 bg-transparent hover:border-[#2460A4]"
               }`}

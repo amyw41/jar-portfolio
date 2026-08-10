@@ -8,19 +8,27 @@ import Carousel from "./Carousel";
 type View = "carousel" | "gallery";
 
 const VIEWS: { id: View; label: string }[] = [
-  { id: "carousel", label: "Carousel" },
   { id: "gallery", label: "Gallery" },
+  { id: "carousel", label: "Carousel" },
 ];
 
 export default function WhatsInside() {
-  const [view, setView] = useState<View>("carousel");
+  const [view, setView] = useState<View>("gallery");
 
   return (
     // pt-36/pb-36 are equal on purpose: this section is self-contained, like
     // Jar's own min-height + flex centering. Don't tune either value to
     // compensate for spacing elsewhere (e.g. margin-top on Footer) — that
     // coupling is exactly what made this fragile before.
-    <section className="mx-auto w-full max-w-[96rem] px-4 pb-36 pt-36 text-center">
+    <section
+      id="work"
+      // Scroll target for the taskbar's "Work" link — offset by the sticky
+      // header's live height (same --taskbar-height var used elsewhere) so
+      // a hash/anchor scroll here doesn't land with the heading tucked
+      // under the header.
+      style={{ scrollMarginTop: "var(--taskbar-height, 4.375rem)" }}
+      className="mx-auto w-full max-w-[96rem] px-4 pb-36 pt-36 text-center"
+    >
       <motion.h2
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

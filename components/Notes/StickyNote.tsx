@@ -85,7 +85,7 @@ export default function StickyNote({ xPct, yPct, rotation, color, text, width, h
       {/* Separate inner element for color/shadow/text so the outer div can
           own position/rotation/scale transforms cleanly. */}
       <div
-        className="flex h-full w-full items-center justify-center overflow-hidden p-[6%] text-center font-roboto font-light leading-snug text-gray-700"
+        className="flex h-full w-full items-center justify-center overflow-hidden p-[6%] text-center font-body font-light leading-snug text-gray-700"
         style={{
           backgroundColor: color,
           fontSize: Math.round(width * 0.075),

@@ -12,13 +12,22 @@ import { motion } from "framer-motion";
 // 662:510 rectangle (object-cover crops each item's media to that rectangle,
 // see the render loop below).
 //
-// One entry per real project (see lib/projects.ts) rather than padded back up
-// to a dozen by repeating — sparse is the deliberate choice here, not a
-// placeholder state. placeholder-4 (currently just a duplicate of Cybersea's
-// video) deliberately has no jar item — it'd visually duplicate the Cybersea
-// tile; revisit once a real 4th project exists.
+// Each real project (see lib/projects.ts) appears twice — Amy asked for the
+// jar to read as more filled than one tile per project allowed. The two
+// copies of a given project use distinct ids/spawn columns/rotate/fallOrder
+// so they don't spawn on top of each other, but share the same density/
+// friction/restitution/frictionAir as every other tile (see below). The
+// second wave's fallOrder/left pairing is deliberately shuffled relative to
+// the first wave's (not simply +3 down the same project order at the same
+// left-to-right sweep) — checked live: keeping them in sync made the second
+// wave read as a predictable repeat stacking straight down onto the first,
+// rather than a second, differently-arranged handful landing more randomly
+// across the pile.
+// placeholder-4 (currently just a duplicate of Cybersea's video) deliberately
+// has no jar item — it'd visually duplicate the Cybersea tile as a *third*
+// copy; revisit once a real 4th project exists.
 //
-// Physics values are uniform across all three, unlike the old personal-items
+// Physics values are uniform across all six, unlike the old personal-items
 // array (which hand-tuned density/friction/restitution per item because each
 // was a real physical object with a distinct shape/weight — a plush jostles
 // differently than a water bottle). That reasoning doesn't apply to flat
@@ -36,22 +45,29 @@ import { motion } from "framer-motion";
 // explicitly not a concern — so collisions are free to torque these. Initial
 // `rotate` values are spread wide (rather than the old near-upright -8/5/-4)
 // so there's visible variety even before physics adds more.
+// Array order = stacking order (see the fixed-zIndex comment on each
+// rendered tile below) — the two Cybersea entries are deliberately placed
+// at the two extreme ends (first = backmost, last = frontmost) per Amy's
+// request to have one Cybersea tile behind everything and the other in
+// front of everything. Swap which Cybersea sits at which end if it turns
+// out backwards once actually rendered (their final resting position is
+// physics-driven, not directly readable from this array).
 const ITEMS = [
   {
-    id: "cybersea",
+    id: "cybersea-2",
     src: "/images/projects/cybersea.mp4",
     mediaType: "video",
     alt: "Cybersea project thumbnail",
-    top: 74, left: 30, size: 160, rotate: -25,
+    top: 78, left: 39, size: 128, rotate: 20,
     density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
-    fallOrder: 0,
+    fallOrder: 5,
   },
   {
     id: "skinsprout",
     src: "/images/projects/skinsprout.mp4",
     mediaType: "video",
     alt: "SkinSprout project thumbnail",
-    top: 70, left: 48, size: 160, rotate: 35,
+    top: 70, left: 48, size: 128, rotate: 35,
     density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
     fallOrder: 1,
   },
@@ -60,9 +76,36 @@ const ITEMS = [
     src: "/images/projects/spotify.png",
     mediaType: "image",
     alt: "Spotify project thumbnail",
-    top: 80, left: 66, size: 160, rotate: -15,
+    top: 80, left: 66, size: 128, rotate: -15,
     density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
     fallOrder: 2,
+  },
+  {
+    id: "skinsprout-2",
+    src: "/images/projects/skinsprout.mp4",
+    mediaType: "video",
+    alt: "SkinSprout project thumbnail",
+    top: 76, left: 80, size: 128, rotate: -35,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 3,
+  },
+  {
+    id: "spotify-2",
+    src: "/images/projects/spotify.png",
+    mediaType: "image",
+    alt: "Spotify project thumbnail",
+    top: 72, left: 16, size: 128, rotate: 10,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 4,
+  },
+  {
+    id: "cybersea",
+    src: "/images/projects/cybersea.mp4",
+    mediaType: "video",
+    alt: "Cybersea project thumbnail",
+    top: 74, left: 30, size: 128, rotate: -25,
+    density: 0.0008, friction: 0.5, restitution: 0.2, frictionAir: 0.02,
+    fallOrder: 0,
   },
 ];
 
@@ -92,9 +135,22 @@ const RUSTLE_RADIUS = 110; // px
 const RUSTLE_STRENGTH = 0.009;
 const RUSTLE_FOLLOW = 0.00018; // how much the pointer's own velocity gets imparted
 const MAX_POINTER_SPEED = 25; // px/tick — caps sudden fast-mouse-move spikes so a quick swipe doesn't fling items out
-const BODY_SCALE = 0.36; // fraction of item.size used as the collision hitbox — much smaller than the rendered image so the pile packs down tightly enough to fit under the jar's rim
+// Fraction of item.size used as the collision hitbox. This is what actually
+// controls how much two tiles are allowed to visually overlap: since the
+// physics only keeps *hitboxes* from overlapping, not the (larger) rendered
+// tiles, two tiles' centers can get as close as one hitbox-width apart —
+// which, as a fraction of the full rendered tile width, caps the maximum
+// overlap at (1 - BODY_SCALE). At the old 0.36 (tuned for the original
+// dozen small, differently-shaped personal items, which needed to pack
+// tightly to fit under the jar's rim), tiles could sit nearly on top of
+// each other — with 6 tiles now (each project doubled up), that made added
+// copies disappear almost entirely behind their sibling instead of reading
+// as extra layers. 0.75 caps overlap at 25% — a tile can only ever cover
+// about a quarter of another, fanning out into a visible stack of layers
+// instead of hiding behind one.
+const BODY_SCALE = 0.75;
 
-// item.size values (160px) are tuned against the container's own max-w-[380px]
+// item.size values (128px) are tuned against the container's own max-w-[380px]
 // design reference. Below that width the container itself shrinks (w-full),
 // but a raw item.size wouldn't — items would keep rendering at full size and
 // visually spill past the (now smaller) jar outline. Scaling every item.size
@@ -304,11 +360,8 @@ export default function Jar() {
           const halfW = visualHalfW[i];
           const halfH = visualHalfH[i];
           el.style.transform = `translate(${body.position.x - halfW}px, ${body.position.y - halfH}px) rotate(${body.angle}rad)`;
-          // Live z-index (not the array's fixed DOM order) so whichever tile
-          // is physically lower/further-forward in the pile also paints on
-          // top — recomputed every frame, cheap enough at only 3 bodies.
-          el.style.zIndex = Math.round(body.position.y);
         });
+
       } catch (err) {
         console.error("Jar animation frame failed, recovering:", err);
       }
@@ -444,12 +497,45 @@ export default function Jar() {
           unoptimized={process.env.NODE_ENV !== "production"}
           className="pointer-events-none object-contain"
         />
-        {ITEMS.map((item, i) => (
+        {/* Tiles live in their own overflow-hidden + faded layer, separate
+            from the jar.png <Image> above — clipping/fading this whole div
+            (instead of the shared container both it and the jar art sit in)
+            keeps the jar's own drawn lid/rim crisp regardless of where this
+            fade kicks in. overflow-hidden stops any tile from ever painting
+            outside this box (this is what keeps the pile off the sticky
+            header above it, regardless of what the physics sim does inside
+            it); the mask-image fade (same technique the projects Carousel's
+            track already uses for its own left/right edges) makes anything
+            reaching the top edge fade out instead of getting hard-clipped
+            there, which read as a harsh straight-line cutoff on its own. */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{
+            // Widened past the container's own left/right edges (was flush
+            // at 0%/100%, i.e. exactly the jar art's own bounding box) so
+            // tiles can spill a little past the jar's sides before getting
+            // clipped, matching the reference mockup's slight overhang —
+            // previously anything poking out sideways got cut off right at
+            // the jar's own width, tighter than intended.
+            left: "-8%",
+            right: "-8%",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent, black 10%)",
+            maskImage: "linear-gradient(to bottom, transparent, black 10%)",
+          }}
+        >
+          {ITEMS.map((item, i) => (
           <div
             key={item.id}
             ref={(el) => { itemElRefs.current[i] = el; }}
             className="absolute left-0 top-0 will-change-transform"
-            style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px` }}
+            // Fixed stacking order — set once from ITEMS' own array order
+            // and never touched again (the tick loop used to recompute this
+            // every frame from live physics position, which made two tiles
+            // with close y-values flicker back and forth over which one
+            // painted on top). Later entries in ITEMS render in front —
+            // reorder the array itself to change which tile is "official"
+            // on top, not this line.
+            style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1 }}
           >
             {item.mediaType === "video" ? (
               <video
@@ -458,7 +544,7 @@ export default function Jar() {
                 loop
                 playsInline
                 autoPlay
-                className="pointer-events-none h-full w-full select-none rounded-md object-cover"
+                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
               />
             ) : (
               <Image
@@ -467,11 +553,12 @@ export default function Jar() {
                 width={1200}
                 height={1280}
                 draggable={false}
-                className="pointer-events-none h-full w-full select-none rounded-md object-cover"
+                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
               />
             )}
           </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Delayed so the jar drawing reads as the first beat (it's already on
@@ -500,7 +587,7 @@ export default function Jar() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
-        className="mt-[clamp(0.25rem,1dvh,0.5rem)] font-roboto text-xl font-light text-gray-500"
+        className="mt-[clamp(0.25rem,1dvh,0.5rem)] font-body text-xl font-light text-gray-500"
       >
         Filled with tasteful design.
       </motion.p>

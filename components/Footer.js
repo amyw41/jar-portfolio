@@ -3,12 +3,18 @@
 import { usePathname } from "next/navigation";
 import { pct } from "@/lib/frame";
 import { SOCIAL_LINKS } from "@/lib/social";
+import { CASE_STUDY_PROJECT_IDS } from "@/lib/projects";
 
 // The category detail page ("What's on my plate?" > a category) clips its
 // plate right at the viewport fold (see app/etc/[category]/page.tsx's height
 // calc) so the footer starts exactly where the plate cuts off — the usual
 // pt-24 breathing room below would just reopen that gap as blank space.
 const NO_GAP_PATTERN = /^\/etc\/[^/]+$/;
+
+// Case-study project pages (see lib/projects.ts) run their own full-height
+// sidebar flush down to this footer — same "no gap" treatment as above, but
+// keyed off the known case-study ids instead of a path shape.
+const CASE_STUDY_PATHS = new Set(CASE_STUDY_PROJECT_IDS.map((id) => `/projects/${id}`));
 
 // Vertical offsets below stay literal since they're small positions inside
 // fixed-height bars, not values meant to stretch with width.
@@ -36,7 +42,7 @@ function MarqueeGroup() {
 
 export default function Footer() {
   const pathname = usePathname();
-  const noGap = NO_GAP_PATTERN.test(pathname);
+  const noGap = NO_GAP_PATTERN.test(pathname) || CASE_STUDY_PATHS.has(pathname);
 
   return (
     // pt-24 is the "space before Footer" rule — it lives here instead of as
@@ -47,7 +53,7 @@ export default function Footer() {
       <div className="relative h-[350px] w-full overflow-hidden bg-[#2460A4]">
         <div className="absolute inset-x-0 top-0 h-[70px]">
           <div
-            className="absolute flex items-center gap-3 whitespace-nowrap font-roboto text-base text-white"
+            className="absolute flex items-center gap-3 whitespace-nowrap font-body text-base text-white"
             style={{ left: pct(29), top: 34 }}
           >
             {SOCIAL_TEXT_LINKS.map((social, i) => (
@@ -85,7 +91,7 @@ export default function Footer() {
           from opposite edges — at narrow widths the two nowrap strings had
           nowhere to go but overlap each other in the middle. */}
       <div className="relative flex w-full flex-col items-center gap-1 bg-black px-4 py-3 text-center sm:h-11 sm:px-0 sm:py-0 sm:text-left">
-        <p className="font-roboto text-sm text-white sm:absolute sm:left-[1.918%] sm:top-[11px]">
+        <p className="font-body text-sm text-white sm:absolute sm:left-[1.918%] sm:top-[11px]">
           Designed + coded by me (© 2026) • with 200 hrs on{" "}
           <a
             href="https://open.spotify.com/user/lial0x5vxkue34cmvahelkx4y?si=67c6719b29d7425a"
@@ -96,16 +102,17 @@ export default function Footer() {
             Spotify
           </a>
         </p>
-        <p className="font-roboto text-sm text-white sm:absolute sm:right-[1.918%] sm:top-[11px]">
-          Looking for my{" "}
+        <p className="font-body text-sm text-white sm:absolute sm:right-[1.918%] sm:top-[11px]">
+          Take a look at my{" "}
           <a
             href="https://amywang.framer.website"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[#2460A4]"
           >
-            portfolio?
+            old portfolio
           </a>
+          !
         </p>
       </div>
     </footer>

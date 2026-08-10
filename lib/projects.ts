@@ -16,13 +16,21 @@ export type PortfolioProject = {
   accent: string;
 };
 
+// Project ids with a full written case study (their own dedicated layout —
+// see SpotifyCaseStudy.tsx and app/projects/[id]/page.tsx) rather than the
+// generic "coming soon" shell. Shared with Footer.js so it can skip its own
+// top padding on these routes — the case-study layout provides a flush
+// full-height sidebar that should run right down to the footer with no gap,
+// unlike the generic shell.
+export const CASE_STUDY_PROJECT_IDS: string[] = ["spotify-guessr"];
+
 export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
     id: "cybersea",
-    name: "Cybersea",
+    name: "CyberSea",
     media: "/images/projects/cybersea.mp4",
     mediaType: "video",
-    description: "Sprint · TikTok", // TODO(Amy): swap for the real tagline
+    description: "1st Overall @uOttahacks · 2026", // TODO(Amy): swap for the real tagline
     accent: "#CFE8F7",
   },
   {
@@ -30,15 +38,15 @@ export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
     name: "SkinSprout",
     media: "/images/projects/skinsprout.mp4",
     mediaType: "video",
-    description: "Hackathon · Figma", // TODO(Amy): swap for the real tagline
+    description: "Personal Project · 2026", // TODO(Amy): swap for the real tagline
     accent: "#FBDCE7",
   },
   {
-    id: "spotify",
-    name: "Spotify",
+    id: "spotify-guessr",
+    name: "Spotify Guessr",
     media: "/images/projects/spotify.png",
     mediaType: "image",
-    description: "Personal project · Web", // TODO(Amy): swap for the real tagline
+    description: "Webapp · 2026", // TODO(Amy): swap for the real tagline
     accent: "#DAF2DE",
   },
   {

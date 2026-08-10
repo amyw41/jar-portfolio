@@ -7,9 +7,13 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Portfolio", href: "https://amywang.framer.website", external: true },
-  { label: "Etc", href: "/etc" },
-  { label: "Notes", href: "/notes" },
+  // Scrolls to the "What's inside?" projects section (id="work") on the
+  // home page — smooth scrolling is enabled globally (see globals.css), so
+  // clicking this from "/" slides straight there; from any other page,
+  // Next.js navigates home first and then lands on the same anchor.
+  { label: "Work", href: "/#work" },
+  { label: "About", href: "/etc" },
+  { label: "Play", href: "/notes" },
 ];
 
 function Logo({ linkClassName, onClick }) {

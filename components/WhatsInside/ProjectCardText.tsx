@@ -40,7 +40,7 @@ export default function ProjectCardText({
       </h3>
       <p
         style={{ fontSize: descriptionFontSize }}
-        className="mt-1 font-roboto font-light text-black/80"
+        className="mt-1 font-body font-light text-black/80"
       >
         {description}
       </p>
