@@ -26,14 +26,6 @@ export const CASE_STUDY_PROJECT_IDS: string[] = ["spotify-guessr"];
 
 export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
-    id: "cybersea",
-    name: "CyberSea",
-    media: "/images/projects/cybersea.mp4",
-    mediaType: "video",
-    description: "1st Overall @uOttahacks · 2026", // TODO(Amy): swap for the real tagline
-    accent: "#CFE8F7",
-  },
-  {
     id: "skinsprout",
     name: "SkinSprout",
     media: "/images/projects/skinsprout.mp4",
@@ -42,23 +34,19 @@ export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
     accent: "#FBDCE7",
   },
   {
+    id: "cybersea",
+    name: "CyberSea",
+    media: "/images/projects/cybersea.mp4",
+    mediaType: "video",
+    description: "1st Overall @uOttahacks · 2026", // TODO(Amy): swap for the real tagline
+    accent: "#CFE8F7",
+  },
+  {
     id: "spotify-guessr",
     name: "Spotify Guessr",
-    media: "/images/projects/spotify.png",
+    media: "/images/projects/spotify/spotify.png",
     mediaType: "image",
     description: "Webapp · 2026", // TODO(Amy): swap for the real tagline
     accent: "#DAF2DE",
-  },
-  {
-    // Placeholder 4th slot — only 3 real projects exist right now. Reuses
-    // Cybersea's media (and its accent, since it's the same footage) so the
-    // layout/grid can be verified with 4 items; swap in a real project +
-    // media + accent whenever Amy has one.
-    id: "placeholder-4",
-    name: "Coming soon",
-    media: "/images/projects/cybersea.mp4",
-    mediaType: "video",
-    description: "More projects on the way", // TODO(Amy): swap for the real tagline
-    accent: "#CFE8F7",
   },
 ];

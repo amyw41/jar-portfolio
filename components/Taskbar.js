@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { CASE_STUDY_PROJECT_IDS } from "@/lib/projects";
 
 const NAV_LINKS = [
   // Scrolls to the "What's inside?" projects section (id="work") on the
-  // home page — smooth scrolling is enabled globally (see globals.css), so
-  // clicking this from "/" slides straight there; from any other page,
-  // Next.js navigates home first and then lands on the same anchor.
+  // home page. Global smooth-scroll was deliberately removed (see
+  // globals.css) since it fought Next's own scroll-to-top on real page
+  // navigations — this link instead gets its own explicit, scoped
+  // scrollIntoView smooth-scroll below, only when already on "/".
   { label: "Work", href: "/#work" },
   { label: "About", href: "/etc" },
   { label: "Play", href: "/notes" },
@@ -32,6 +35,27 @@ function Logo({ linkClassName, onClick }) {
 }
 
 function NavLinks({ linkClassName, onLinkClick }) {
+  const pathname = usePathname();
+
+  // Only the "Work" link (href="/#work") has a hash to worry about. When
+  // we're already on the page that hash lives on, intercept the click and
+  // scrollIntoView smoothly instead of letting the browser jump instantly —
+  // that's the one interaction on the site that should still feel animated.
+  // From any other page, this falls through to Link's normal navigation: a
+  // real route change to "/" followed by the browser's native (instant)
+  // jump to the element once it's mounted — consistent with every other
+  // page-to-page click on the site now that global smooth-scroll is gone.
+  function handleClick(e, link) {
+    onLinkClick?.(e);
+    const hashIndex = link.href.indexOf("#");
+    if (hashIndex === -1) return;
+    const path = link.href.slice(0, hashIndex) || "/";
+    const hash = link.href.slice(hashIndex + 1);
+    if (pathname !== path) return;
+    e.preventDefault();
+    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return NAV_LINKS.map((link) =>
     link.external ? (
       <a
@@ -45,15 +69,35 @@ function NavLinks({ linkClassName, onLinkClick }) {
         {link.label}
       </a>
     ) : (
-      <Link key={link.label} href={link.href} className={linkClassName} onClick={onLinkClick}>
+      <Link
+        key={link.label}
+        href={link.href}
+        className={linkClassName}
+        onClick={(e) => handleClick(e, link)}
+      >
         {link.label}
       </Link>
     )
   );
 }
 
+// Case-study pages (see SpotifyCaseStudy.tsx) draw their own logo at the
+// top of their sidebar instead — a second logo directly under this header's
+// would be redundant, and the whole point of that page's request was a
+// taskbar-free look matching Amy's old Framer reference. Sharing
+// CASE_STUDY_PROJECT_IDS with lib/projects.ts (already used by
+// app/projects/[id]/page.tsx for the same "does this id have a real case
+// study" check) means adding a future case study automatically hides the
+// taskbar there too, with nothing to remember to update in two places.
+function isCaseStudyRoute(pathname) {
+  return CASE_STUDY_PROJECT_IDS.some((id) => pathname === `/projects/${id}`);
+}
+
 export default function Taskbar() {
+  const pathname = usePathname();
+  const hideOnThisRoute = isCaseStudyRoute(pathname);
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const headerRef = useRef(null);
 
   // Jar's hero section sizes itself to "the rest of the viewport below this
@@ -63,6 +107,14 @@ export default function Taskbar() {
   // property on the root element means any component can read the true
   // value without prop drilling, and it self-corrects if this markup ever
   // changes, instead of drifting out of sync with a hardcoded rem guess.
+  //
+  // Depends on `hideOnThisRoute` (not just [] like before) — the header
+  // isn't unmounted on a case-study route, just rendered as null (see the
+  // early return below), so headerRef.current goes from a real node to null
+  // and back as you navigate to/from one. A plain mount-only effect would
+  // only ever see whichever state was true on Taskbar's very first mount
+  // and never re-measure after that; re-running whenever this flips
+  // reattaches the ResizeObserver to the real node once it exists again.
   useLayoutEffect(() => {
     const header = headerRef.current;
     if (!header) return;
@@ -79,10 +131,62 @@ export default function Taskbar() {
     const resizeObserver = new ResizeObserver(setHeightVar);
     resizeObserver.observe(header);
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [hideOnThisRoute]);
+
+  // Slides the header up out of view on scroll-down, back down on scroll-up
+  // — rAF-throttled so it only reads scrollY once per frame. Pinned visible
+  // whenever the mobile menu is open (so it can't slide away mid-interaction)
+  // and whenever the page is scrolled within one header-height of the top
+  // (so it never hides before the user has scrolled meaningfully). A small
+  // MIN_DELTA ignores sub-pixel/trackpad jitter that would otherwise flicker
+  // the direction back and forth.
+  useEffect(() => {
+    const MIN_DELTA = 4;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY;
+      const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0;
+      const delta = y - lastY;
+
+      if (open || y <= headerHeight) {
+        setHidden(false);
+      } else if (delta > MIN_DELTA) {
+        setHidden(true);
+      } else if (delta < -MIN_DELTA) {
+        setHidden(false);
+      }
+      lastY = y;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open]);
+
+  // After all hooks, not before — conditionally skipping hook calls above
+  // this point would break React's rules of hooks (the same hooks must run
+  // in the same order on every render). Rendering null here (rather than
+  // Taskbar's parent conditionally omitting it) is what lets the
+  // height-measuring effect above still react correctly to this route ever
+  // changing, since the component stays mounted throughout.
+  if (hideOnThisRoute) return null;
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white">
+    <header
+      ref={headerRef}
+      className={`sticky top-0 z-50 w-full border-b border-gray-200 bg-white transition-transform duration-300 ease-in-out ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
       <div className="hidden w-full grid-cols-3 items-center px-8 py-3 md:grid">
         <Logo linkClassName="flex w-fit items-center justify-self-start self-start" />
 

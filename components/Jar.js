@@ -23,10 +23,6 @@ import { motion } from "framer-motion";
 // wave read as a predictable repeat stacking straight down onto the first,
 // rather than a second, differently-arranged handful landing more randomly
 // across the pile.
-// placeholder-4 (currently just a duplicate of Cybersea's video) deliberately
-// has no jar item — it'd visually duplicate the Cybersea tile as a *third*
-// copy; revisit once a real 4th project exists.
-//
 // Physics values are uniform across all six, unlike the old personal-items
 // array (which hand-tuned density/friction/restitution per item because each
 // was a real physical object with a distinct shape/weight — a plush jostles
@@ -497,17 +493,18 @@ export default function Jar() {
           unoptimized={process.env.NODE_ENV !== "production"}
           className="pointer-events-none object-contain"
         />
-        {/* Tiles live in their own overflow-hidden + faded layer, separate
-            from the jar.png <Image> above — clipping/fading this whole div
-            (instead of the shared container both it and the jar art sit in)
-            keeps the jar's own drawn lid/rim crisp regardless of where this
-            fade kicks in. overflow-hidden stops any tile from ever painting
-            outside this box (this is what keeps the pile off the sticky
-            header above it, regardless of what the physics sim does inside
-            it); the mask-image fade (same technique the projects Carousel's
-            track already uses for its own left/right edges) makes anything
-            reaching the top edge fade out instead of getting hard-clipped
-            there, which read as a harsh straight-line cutoff on its own. */}
+        {/* Tiles live in their own overflow-hidden layer, separate from the
+            jar.png <Image> above — clipping this whole div (instead of the
+            shared container both it and the jar art sit in) keeps the jar's
+            own drawn lid/rim crisp regardless of where tiles get clipped.
+            overflow-hidden stops any tile from ever painting outside this
+            box — this is what keeps the pile off the sticky header above
+            it, regardless of what the physics sim does inside it. No
+            top-edge fade here (there was one, a mask-image gradient) — it
+            faded tiles out for the first 10% of the box, which read as the
+            falling tiles only becoming visible partway down instead of
+            right from the top; a hard clip here reads as them genuinely
+            falling in from the top of the page. */}
         <div
           className="absolute inset-0 overflow-hidden"
           style={{
@@ -519,8 +516,6 @@ export default function Jar() {
             // the jar's own width, tighter than intended.
             left: "-8%",
             right: "-8%",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent, black 10%)",
-            maskImage: "linear-gradient(to bottom, transparent, black 10%)",
           }}
         >
           {ITEMS.map((item, i) => (

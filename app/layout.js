@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Taskbar from "@/components/Taskbar";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const singsong = localFont({
   src: "../public/fonts/singsong/Singsong.otf",
@@ -40,10 +41,36 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${singsong.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${publicSans.variable} h-full antialiased`}
+      className={`${singsong.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${publicSans.variable} h-full overflow-x-clip antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-body">
+      {/* overflow-x-clip here (and on html above) — the actual fix for
+          the site-wide horizontal scrollbar: SpotifyCaseStudy.tsx's
+          full-bleed sidebar row (and any future full-bleed row like it)
+          uses `w-screen` to reach the true viewport edge past its own
+          ancestor's max-width, but `100vw` includes the vertical
+          scrollbar's own width — a few px wider than the page's actual
+          visible content box on any page tall enough to have one. Clipping
+          horizontal overflow globally, once, here, is more robust than
+          fighting that vw/scrollbar mismatch per full-bleed element (and
+          catches it if it recurs) — Amy explicitly doesn't want horizontal
+          scroll anywhere on the site, not just a pixel-perfect fix for this
+          one page.
+
+          `clip`, specifically NOT `hidden` — this was `overflow-x-hidden`
+          originally, which silently broke every `position: sticky` element
+          on the entire site (the case-study sidebar included): any overflow
+          value other than `visible` on an ancestor turns it into a new
+          scrolling container, and sticky computes its offset against the
+          *nearest* one of those — so sticky descendants were "sticking" to
+          html/body's own box instead of the real viewport, which (since
+          html/body aren't independently scrollable) meant they didn't
+          visibly stick at all. `clip` still clips the same overflow
+          (fixing the horizontal-scrollbar bug this was added for) but is
+          explicitly excluded from that scroll-container promotion, so it
+          doesn't interfere with sticky anywhere else on the site. */}
+      <body className="flex min-h-full flex-col overflow-x-clip font-body">
+        <ScrollToTop />
         <Taskbar />
         <main className="flex-1">{children}</main>
         <Footer />

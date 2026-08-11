@@ -45,7 +45,12 @@ export default async function ProjectPage({
       className={`relative mx-auto flex w-full max-w-[96rem] flex-col px-4 text-center ${
         CaseStudy ? "" : "pb-24 pt-6"
       }`}
-      style={{ minHeight: "calc(100dvh - var(--taskbar-height, 4.375rem))" }}
+      // Case studies hide the taskbar entirely (see Taskbar.js's
+      // isCaseStudyRoute check) — nothing above them to subtract, so their
+      // own minHeight is just the full 100dvh, not
+      // calc(100dvh - var(--taskbar-height)) like the generic shell (which
+      // still sits below a visible taskbar) needs.
+      style={{ minHeight: CaseStudy ? "100dvh" : "calc(100dvh - var(--taskbar-height, 4.375rem))" }}
     >
       {/* Matches /etc/[category]/page.tsx's own back-link positioning
           exactly — fixed (not absolute) so it lines up with Taskbar.js's
