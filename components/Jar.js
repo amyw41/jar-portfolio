@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
 import { motion } from "framer-motion";
 
@@ -173,12 +173,20 @@ export default function Jar() {
   const wallsRef = useRef([]);
   const pointerRef = useRef({ x: 0, y: 0, prevX: 0, prevY: 0, active: false });
   const renderOffsetRef = useRef({ x: 0, y: 0 });
+  // Gates the whole physics setup below on the jar art actually having
+  // loaded — without this, the tiles' own effect ran immediately on mount
+  // regardless of whether jar.png (a much heavier asset) had finished
+  // fetching/decoding yet, so on a slow load the tiles could start visibly
+  // falling into an outline that hadn't appeared yet. Set from the jar
+  // <Image>'s own onLoad below, so the very first falling frame can never
+  // happen before the jar is actually there to fall into.
+  const [jarLoaded, setJarLoaded] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
     const section = sectionRef.current;
     const tilesLayer = tilesLayerRef.current;
-    if (!container || !section || !tilesLayer) return;
+    if (!container || !section || !tilesLayer || !jarLoaded) return;
 
     // Measured against the tiles layer itself, not `section` — the layer's
     // own left/right are pulled in by -8% (see its style below, for the
@@ -475,7 +483,7 @@ export default function Jar() {
       Matter.World.clear(engine.world);
       Matter.Engine.clear(engine);
     };
-  }, []);
+  }, [jarLoaded]);
 
   return (
     <section
@@ -500,8 +508,11 @@ export default function Jar() {
         ref={containerRef}
         className="relative w-full touch-none overflow-visible"
         style={{
-          // Matches jar.png's own real pixel ratio (5356x7556, simplified) —
-          // must match exactly, or object-contain below letterboxes the
+          // Matches jar.png's own real pixel ratio (1600x2257, simplified —
+          // downsized from an original 5356x7556 export, same 1339:1889
+          // ratio, to cut load time; still ~4x the box's own max-w-[380px]
+          // reference width, plenty for retina) — must match exactly, or
+          // object-contain below letterboxes the
           // image inside this box, throwing off WALLS (fractions of *this
           // container*, not the visibly-rendered image) from where the drawn
           // jar's outline actually is. Re-measure this alongside WALLS if
@@ -538,6 +549,10 @@ export default function Jar() {
           // always show the current file. Production still gets normal
           // next/image optimization.
           unoptimized={process.env.NODE_ENV !== "production"}
+          // Flips jarLoaded (see its own comment above) once this has
+          // actually decoded — Next calls this even for an already-cached
+          // image, so a warm cache still gates correctly instead of hanging.
+          onLoad={() => setJarLoaded(true)}
           className="pointer-events-none object-contain"
         />
       </div>

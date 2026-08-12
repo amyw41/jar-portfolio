@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import PlateCircle from "@/components/Etc/PlateCircle";
-import type { EtcCategorySlug } from "@/lib/etc";
+import { PLATE_IMAGES, type EtcCategorySlug } from "@/lib/etc";
 
 // How long a plate takes to slide up into view — on page load for the
 // heading, and again per-category (matching Carousel.tsx's own reveal) as
@@ -59,13 +59,22 @@ type CollageCategory = {
 // plate's edge (the raw anchors merely touch the plate, not overlap it).
 // These are the resolved numbers from that tuning — editing one photo now
 // just means changing its own field here directly, nothing to recompute.
-// Plate yPct values are uniformly spaced — 9.7, 36.8, 63.9, 91.0, each
-// 27.1 apart — anchored at the original first (drawing, 9.7) and last
-// (content, 91.0) plates, with nails and dancing moved to sit evenly
-// between them. Dancing's photos shifted by the same -3.3 delta as its
-// plate, so they stay glued to it as the same rigid unit as before;
-// drawing/content have no delta (their own plates didn't move), and nails
-// has no photos to shift.
+// Plate yPct values are uniformly spaced — 9.7, 36.8, 63.9, 91.0, each 27.1
+// apart — anchored at drawing (9.7, row 1) and content (91.0, row 4).
+// Dancing now sits in row 2 (36.8) and nails in row 3 (63.9) — swapped from
+// their original rows per Amy's request. Rows alternate left/right
+// (drawing left, row 2 right, row 3 left, content right) — dancing's plate
+// and all 7 of its photos were mirrored horizontally as one rigid unit
+// (newXPct = 100 - oldXPct) to move from row 3's left side to row 2's
+// right side, since its original cluster already sat symmetrically between
+// x=14.1 and x=86 (centered on 50), so a straight mirror keeps its own
+// internal composition — spacing, overlap, everything — exactly intact,
+// just facing the other way. Only positions moved; none of the actual
+// photo files were flipped (no scaleX anywhere), so every photo still
+// displays right-reading. Dancing's photos also shifted by the same -27.1
+// yPct delta as its plate (63.9 → 36.8), staying glued to it as the same
+// unit. Nails has no photos, so its move (36.8 → 63.9, 76.0 → 14.1, taking
+// dancing's old row-3 slot) is just the two plate fields.
 const GALLERY: CollageCategory[] = [
   {
     slug: "drawing",
@@ -113,92 +122,123 @@ const GALLERY: CollageCategory[] = [
     ],
   },
   {
-    slug: "nails",
-    label: "Nails",
-    plateXPct: 76.0,
-    plateYPct: 36.8,
-    plateSize: PLATE_SIZE,
-    photos: [],
-  },
-  {
     slug: "dancing",
     label: "Dancing",
-    plateXPct: 14.1,
-    plateYPct: 63.9,
+    // Mirrored from the original 14.1 (100 - 14.1 = 85.9) — see the GALLERY
+    // comment above.
+    plateXPct: 85.9,
+    plateYPct: 36.8,
     plateSize: PLATE_SIZE,
     photos: [
       {
         src: "/images/etc/dance1.png",
         caption: "Curtain call after a group recital.",
-        xPct: 33,
-        yPct: 61.7,
-        width: 288,
-        height: 213,
+        xPct: 48,
+        yPct: 34.6,
+        width: 268,
+        height: 193,
         z: 1,
-      },
-      {
-        src: "/images/etc/dance2.png",
-        caption: "Chinese classical dance performance.",
-        xPct: 36,
-        yPct: 67.7,
-        width: 253,
-        height: 180,
-        z: 5,
       },
       {
         src: "/images/etc/dance3.png",
         caption: "Korean traditional hanbok dance.",
-        xPct: 52.5,
-        yPct: 64.2,
-        width: 220,
-        height: 290,
+        xPct: 63,
+        yPct: 37,
+        width: 200,
+        height: 270,
         z: 3,
       },
       {
         src: "/images/etc/dance4.png",
         caption: "Fan dance in blue stage light.",
-        xPct: 50,
-        yPct: 58.2,
-        width: 290,
-        height: 193,
+        xPct: 32,
+        yPct: 31,
+        width: 270,
+        height: 180,
         z: 4,
       },
       {
+        // Swapped with dance7 ("Fan in hand, between poses") — that one,
+        // not dance4, is the other "fan" photo Amy meant.
         src: "/images/etc/dance5.png",
         caption: "Extension into an arabesque.",
-        xPct: 66,
-        yPct: 60.2,
-        width: 280,
-        height: 185,
+        xPct: 46,
+        yPct: 40,
+        width: 260,
+        height: 172,
         z: 5,
       },
       {
         src: "/images/etc/dance6.png",
         caption: "Backstage at the Abstract Dance Challenge.",
-        xPct: 74,
-        yPct: 54.7,
+        xPct: 14.61,
+        yPct: 34,
         width: 186,
         height: 244,
-        z: 5,
+        z: 10,
       },
       {
+        // Swapped with dance5 ("Extension into an arabesque") per Amy's
+        // correction — was previously moved/nudged to rest between dance5
+        // and dance3; now sits at dance5's old spot instead.
         src: "/images/etc/dance7.png",
         caption: "Fan in hand, between poses.",
-        xPct: 86,
-        yPct: 59.7,
-        width: 238,
-        height: 159,
-        z: 7,
+        xPct: 28,
+        yPct: 36.5,
+        width: 280,
+        height: 190,
+        z: 3,
       },
     ],
   },
   {
-    slug: "content",
-    label: "Content",
-    plateXPct: 75.4,
-    plateYPct: 91.0,
+    slug: "nails",
+    label: "Nails",
+    plateXPct: 14.1,
+    plateYPct: 63.9,
     plateSize: PLATE_SIZE,
-    photos: [],
+    // Spread rightward from the plate the same way drawing's own 4-photo
+    // cluster does (drawing also sits at x=14.1) — widths/heights carried
+    // over from each real photo's own intrinsic ratio (nails1 is ~2160x2373;
+    // nails2-5 are all ~2160x2880, the standard 3:4 phone-photo ratio).
+    photos: [
+      {
+        src: "/images/etc/nails2.jpg",
+        caption: "Negative space French with a crystal lattice accent.",
+        xPct: 65,
+        yPct: 61,
+        width: 200,
+        height: 267,
+        z: 2,
+      },
+      {
+        src: "/images/etc/nails3.jpg",
+        caption: "Leopard print with 3D star charms.",
+        xPct: 36,
+        yPct: 63,
+        width: 220,
+        height: 293,
+        z: 0,
+      },
+      {
+        src: "/images/etc/nails4.jpg",
+        caption: "Nude nails with bold number decals.",
+        xPct: 50.2,
+        yPct: 58,
+        width: 185,
+        height: 253,
+        z: 4,
+      },
+      {
+        src: "/images/etc/nails5.jpg",
+        caption: "Shimmery mauve coffin nails with a chrome accent.",
+        xPct: 52.6,
+        yPct: 65,
+        width: 205,
+        height: 277,
+        z: 0,
+      },
+    ],
   },
 ];
 
@@ -278,6 +318,43 @@ function computeStageHeight(gallery: CollageCategory[]): number {
 
 const STAGE_HEIGHT = computeStageHeight(GALLERY);
 
+// STAGE_HEIGHT above is set by whichever element needs the most room to
+// avoid clipping — in practice that's always been the top-anchored drawing
+// row (very close to y=0, so keeping it fully on-screen demands a tall
+// stage), completely independent of whatever sits at the bottom. That's
+// fine when a bottom row (like content/"Me") actually reaches down near
+// STAGE_HEIGHT's own edge, but pulling that row (see GALLERY above) leaves
+// nails, well short of the bottom, as the new lowest content — and the gap
+// between nails and the still-tall STAGE_HEIGHT reads as dead space where
+// that row used to be. This computes how far down the real content actually
+// reaches (in the same STAGE_HEIGHT-relative px every element's `top: X%`
+// already resolves to) so the stage box can be visually cropped to that —
+// nothing's percentage position changes, only how much blank room is left
+// showing below the lowest thing actually there.
+function computeVisibleStageHeight(gallery: CollageCategory[], stageHeight: number): number {
+  let bottom = 0;
+  for (const cat of gallery) {
+    bottom = Math.max(bottom, (cat.plateYPct / 100) * stageHeight + cat.plateSize / 2);
+    for (const photo of cat.photos) {
+      bottom = Math.max(bottom, (photo.yPct / 100) * stageHeight + photo.height / 2);
+    }
+  }
+  return Math.ceil(bottom) + 40; // small breathing room below the lowest element
+}
+
+const VISIBLE_STAGE_HEIGHT = computeVisibleStageHeight(GALLERY, STAGE_HEIGHT);
+
+// Every element's yPct was authored as a % of STAGE_HEIGHT (the tall,
+// worst-case reference height — see computeStageHeight's own comment), so
+// this converts that once into a literal px offset. Doing it this way
+// (instead of leaving top as a live "X%" and relying on the container's own
+// height to equal STAGE_HEIGHT) is what lets the container itself just be
+// VISIBLE_STAGE_HEIGHT tall — position and container size are fully
+// decoupled, so there's nothing left to keep in sync by hand.
+function toPx(yPct: number): number {
+  return (yPct / 100) * STAGE_HEIGHT;
+}
+
 export default function EtcPage() {
   const router = useRouter();
   // Next.js unmounts this page the instant a Link navigation fires, with no
@@ -302,7 +379,7 @@ export default function EtcPage() {
   const [revealedCats, setRevealedCats] = useState<Set<EtcCategorySlug>>(new Set());
 
   return (
-    <section className="w-full px-4 pb-36 pt-12 text-center">
+    <section className="w-full px-4 pb-16 pt-12 text-center">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: exitHref ? 0 : 1, y: exitHref ? -16 : 0 }}
@@ -316,86 +393,96 @@ export default function EtcPage() {
         </h1>
 
         {/* Desktop-only fixed composition — never rescales with the
-            viewport. Narrower windows scroll horizontally instead of
-            squishing the artwork. */}
-        <div className="w-full overflow-x-auto">
-          <div className="relative mx-auto mt-8" style={{ width: STAGE_WIDTH, height: STAGE_HEIGHT }}>
-            {GALLERY.map((cat) => (
-              <div key={cat.slug}>
-                <Link
-                  href={`/etc/${cat.slug}`}
-                  aria-label={`View ${cat.label} photos`}
-                  className="absolute"
+            viewport, so there's no need for percentage-based positioning at
+            all: every plate/photo's yPct is converted to a literal px offset
+            below (toPx), computed once against STAGE_HEIGHT (the tallest
+            room any single element needs — see computeStageHeight). That
+            decouples position from this box's own height entirely, so the
+            box itself can just be sized to VISIBLE_STAGE_HEIGHT (where the
+            real content actually ends) with nothing left over before the
+            footer — no nested wrapper, no scroll container, overflow stays
+            the default `visible` throughout so the drawing plate's
+            intentional left-edge bleed still shows uncropped. */}
+        <div className="relative mx-auto mt-8" style={{ width: STAGE_WIDTH, height: VISIBLE_STAGE_HEIGHT }}>
+          {GALLERY.map((cat) => (
+            <div key={cat.slug}>
+              <Link
+                href={`/etc/${cat.slug}`}
+                aria-label={`View ${cat.label} photos`}
+                // group — lets PlateCircle's own label span react to this
+                // link's hover (see its group-hover:text-[#2460A4] class)
+                // without PlateCircle needing to know anything about hover
+                // itself.
+                className="absolute group"
+                style={{
+                  left: `${cat.plateXPct}%`,
+                  top: toPx(cat.plateYPct),
+                  transform: "translate(-50%, -50%)",
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setExitHref(`/etc/${cat.slug}`);
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: VIEWPORT_AMOUNT }}
+                  onViewportEnter={() =>
+                    setRevealedCats((prev) => (prev.has(cat.slug) ? prev : new Set(prev).add(cat.slug)))
+                  }
+                  transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut" }}
+                >
+                  <PlateCircle label={cat.label} src={PLATE_IMAGES[cat.slug]} size={cat.plateSize} />
+                </motion.div>
+              </Link>
+
+              {cat.photos.map((photo) => (
+                // Plain div, not a Link — only the plate itself should
+                // navigate to /etc/{slug}; these photos are decorative.
+                <div
+                  key={photo.src}
+                  className="pointer-events-none absolute block"
                   style={{
-                    left: `${cat.plateXPct}%`,
-                    top: `${cat.plateYPct}%`,
+                    left: `${photo.xPct}%`,
+                    top: toPx(photo.yPct),
+                    width: photo.width,
+                    height: photo.height,
                     transform: "translate(-50%, -50%)",
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setExitHref(`/etc/${cat.slug}`);
+                    zIndex: photo.z,
                   }}
                 >
                   <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: VIEWPORT_AMOUNT }}
-                    onViewportEnter={() =>
-                      setRevealedCats((prev) => (prev.has(cat.slug) ? prev : new Set(prev).add(cat.slug)))
-                    }
-                    transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut" }}
-                  >
-                    <PlateCircle label={cat.label} size={cat.plateSize} />
-                  </motion.div>
-                </Link>
-
-                {cat.photos.map((photo) => (
-                  // Plain div, not a Link — only the plate itself should
-                  // navigate to /etc/{slug}; these photos are decorative.
-                  <div
-                    key={photo.src}
-                    className="pointer-events-none absolute block"
-                    style={{
-                      left: `${photo.xPct}%`,
-                      top: `${photo.yPct}%`,
-                      width: photo.width,
-                      height: photo.height,
-                      transform: "translate(-50%, -50%)",
-                      zIndex: photo.z,
+                    initial={{ opacity: 0, y: -70 }}
+                    animate={revealedCats.has(cat.slug) ? { opacity: 1, y: 0 } : undefined}
+                    transition={{
+                      duration: PHOTO_DURATION,
+                      ease: "easeOut",
+                      // Ranked by each photo's own yPct (not array order) so
+                      // whichever photo sits highest up the page rolls in
+                      // first, matching the order they actually appear as
+                      // you scroll down past the category — plus any
+                      // photo-specific extraDelay on top, for a future
+                      // one-off exception that should lag behind the rest.
+                      delay:
+                        SLIDE_UP_DURATION +
+                        topToBottomRank(cat.photos, photo) * categoryStaggerStep(cat.photos) +
+                        (photo.extraDelay ?? 0),
                     }}
+                    className="relative h-full w-full overflow-hidden shadow-md"
                   >
-                    <motion.div
-                      initial={{ opacity: 0, y: -70 }}
-                      animate={revealedCats.has(cat.slug) ? { opacity: 1, y: 0 } : undefined}
-                      transition={{
-                        duration: PHOTO_DURATION,
-                        ease: "easeOut",
-                        // Ranked by each photo's own yPct (not array order) so
-                        // whichever photo sits highest up the page rolls in
-                        // first, matching the order they actually appear as
-                        // you scroll down past the category — plus any
-                        // photo-specific extraDelay on top, for a future
-                        // one-off exception that should lag behind the rest.
-                        delay:
-                          SLIDE_UP_DURATION +
-                          topToBottomRank(cat.photos, photo) * categoryStaggerStep(cat.photos) +
-                          (photo.extraDelay ?? 0),
-                      }}
-                      className="relative h-full w-full overflow-hidden shadow-md"
-                    >
-                      <Image
-                        src={photo.src}
-                        alt=""
-                        fill
-                        sizes={`${Math.round(photo.width)}px`}
-                        className="object-cover"
-                      />
-                    </motion.div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                    <Image
+                      src={photo.src}
+                      alt=""
+                      fill
+                      sizes={`${Math.round(photo.width)}px`}
+                      className="object-cover"
+                    />
+                  </motion.div>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </motion.div>
     </section>

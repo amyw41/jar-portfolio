@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import PlateCircle from "@/components/Etc/PlateCircle";
 import { MAX_ITEM_SIZE, deriveLayout, useElementSize } from "@/components/WhatsInside/layout";
-import { ETC_CATEGORIES, ETC_PHOTOS } from "@/lib/etc";
+import { ETC_CATEGORIES, ETC_PHOTOS, PLATE_IMAGES } from "@/lib/etc";
 
 // Matches Carousel.tsx's own arrow styling exactly — fixed size (not scaled
 // to viewport the way the rest of this page used to be), same as the home
@@ -360,7 +360,7 @@ export default function EtcCategoryPage() {
                 className="absolute left-1/2 -translate-x-1/2 overflow-hidden"
                 style={{ top: 0, width: plateSize, height: plateVisibleHeight }}
               >
-                <PlateCircle label="" size={plateSize} className="absolute left-0 top-0" />
+                <PlateCircle label="" src={PLATE_IMAGES[category.slug]} size={plateSize} className="absolute left-0 top-0" />
               </div>
             </div>
           </div>
@@ -397,7 +397,7 @@ export default function EtcCategoryPage() {
               className="absolute left-1/2 -translate-x-1/2 overflow-hidden"
               style={{ top: -plateGeometryRadius, width: plateSize, height: plateVisibleHeight }}
             >
-              <PlateCircle label="" size={plateSize} className="absolute left-0 top-0" />
+              <PlateCircle label="" src={PLATE_IMAGES[category.slug]} size={plateSize} className="absolute left-0 top-0" />
             </div>
 
             {photoCount > 1 && (
