@@ -46,6 +46,15 @@ export default function ProjectMedia({
           fill
           sizes={sizes}
           draggable={false}
+          // Turbopack's dev-mode image-optimization cache doesn't bust when
+          // a file is replaced at the same path/filename (it keeps serving
+          // the first-ever encode indefinitely) — this is exactly the
+          // "swapped the file but the site won't show it" symptom, and
+          // project media/thumbnails get swapped often during design
+          // iteration. Same workaround already used for jar.png in Jar.js
+          // and, below, for every image in CaseStudyImage. Production still
+          // gets normal next/image optimization.
+          unoptimized={process.env.NODE_ENV !== "production"}
           className="pointer-events-none select-none object-cover"
         />
       )}

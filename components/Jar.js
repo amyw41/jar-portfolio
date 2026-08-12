@@ -69,7 +69,7 @@ const ITEMS = [
   },
   {
     id: "spotify",
-    src: "/images/projects/spotify.png",
+    src: "/images/projects/spotify/spotify.png",
     mediaType: "image",
     alt: "Spotify project thumbnail",
     top: 80, left: 66, size: 128, rotate: -15,
@@ -87,7 +87,7 @@ const ITEMS = [
   },
   {
     id: "spotify-2",
-    src: "/images/projects/spotify.png",
+    src: "/images/projects/spotify/spotify.png",
     mediaType: "image",
     alt: "Spotify project thumbnail",
     top: 72, left: 16, size: 128, rotate: 10,

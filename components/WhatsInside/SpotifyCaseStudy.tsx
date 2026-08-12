@@ -71,11 +71,16 @@ const TEXT = {
 // backdrop for screenshots/diagrams shot on white; the phone mockups in the
 // Final Project grid turn it off since those PNGs already have their own
 // transparent background and device frame baked in.
+// `video` — the hero screen recording (the only video on this page so far)
+// needs autoplay/muted/loop instead of next/image, but should still share
+// this same box (aspect-ratio, rounded corners, optional bg) rather than
+// duplicating that wrapper just for one case.
 function CaseStudyImage({
   src,
   alt,
   ratio,
   bg = true,
+  video = false,
   className = "",
   sizes = "(min-width: 768px) 900px, 100vw",
 }: {
@@ -83,6 +88,7 @@ function CaseStudyImage({
   alt: string;
   ratio: string;
   bg?: boolean;
+  video?: boolean;
   className?: string;
   sizes?: string;
 }) {
@@ -91,7 +97,33 @@ function CaseStudyImage({
       style={{ aspectRatio: ratio }}
       className={`relative w-full overflow-hidden rounded-[8px] ${bg ? "bg-[#EFEDF5]" : ""} ${className}`}
     >
-      <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />
+      {video ? (
+        <video
+          src={src}
+          muted
+          loop
+          playsInline
+          autoPlay
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          // Turbopack's dev-mode image-optimization cache doesn't bust when
+          // a file is replaced at the same path (it keeps serving the
+          // first-ever encode indefinitely) — every case-study image gets
+          // swapped often during design iteration, so skip the optimizer in
+          // dev to always show the current file. Same workaround already
+          // used for jar.png in Jar.js and for the gallery/carousel cards
+          // in ProjectMedia.tsx. Production still gets normal next/image
+          // optimization.
+          unoptimized={process.env.NODE_ENV !== "production"}
+          className="object-cover"
+        />
+      )}
     </div>
   );
 }
