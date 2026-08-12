@@ -36,6 +36,20 @@ body {
   letter-spacing: -0.035em;
 }
 
+/* Images shouldn't highlight/drag-select like text does (click-dragging
+   across a photo or the jar/plate artwork would otherwise select it along
+   with any adjacent text) — text remains selectable as normal. */
+img {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Selected text — the site's own blue accent (#2460A4, used for hover
+   states/footer) at 10% opacity instead of the browser default. */
+::selection {
+  background-color: rgb(36 96 164 / 10%);
+}
+
 @keyframes marquee {
   from {
     transform: translateX(0);

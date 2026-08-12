@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import PlateCircle from "@/components/Etc/PlateCircle";
 import { PLATE_IMAGES, type EtcCategorySlug } from "@/lib/etc";
+import { SHIMMER_BLUR_DATA_URL } from "@/lib/blurPlaceholder";
 
 // How long a plate takes to slide up into view — on page load for the
 // heading, and again per-category (matching Carousel.tsx's own reveal) as
@@ -476,6 +477,8 @@ export default function EtcPage() {
                       alt=""
                       fill
                       sizes={`${Math.round(photo.width)}px`}
+                      placeholder="blur"
+                      blurDataURL={SHIMMER_BLUR_DATA_URL}
                       className="object-cover"
                     />
                   </motion.div>

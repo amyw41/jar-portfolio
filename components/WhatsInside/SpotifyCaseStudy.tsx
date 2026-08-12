@@ -23,7 +23,8 @@ const LOAD_IN_TRANSITION = { duration: 0.4, ease: "easeOut" as const };
 // subheading ("The Problem") for that section, then just the bare
 // subheading for every row after that. Right column (1.5fr) carries the
 // actual content — paragraphs, lists, placeholder media. No serif font
-// anywhere on this page; Roboto only, weight does the differentiating.
+// anywhere on this page; font-body (Public Sans) only, weight does the
+// differentiating.
 //
 // Rendered only for the "spotify-guessr" project id — see
 // app/projects/[id]/page.tsx. Every other project keeps the existing

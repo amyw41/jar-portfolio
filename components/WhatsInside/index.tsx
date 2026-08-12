@@ -46,7 +46,7 @@ export default function WhatsInside() {
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
         className="mt-6 flex items-center justify-center"
       >
-        <div className="inline-flex overflow-hidden rounded-[5px] border border-[#2460A4] font-instrument-sans text-[16px] font-normal">
+        <div className="inline-flex overflow-hidden rounded-[5px] border border-[#2460A4] font-body text-[16px] font-normal">
           {VIEWS.map((v, i) => (
             <button
               key={v.id}

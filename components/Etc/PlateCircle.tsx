@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { SHIMMER_BLUR_DATA_URL } from "@/lib/blurPlaceholder";
 
 // "Plate" circle used both small (overview grid) and large (detail page,
 // centered) — a hand-drawn plate illustration with the category name
@@ -31,6 +32,8 @@ export default function PlateCircle({
         fill
         priority
         sizes={`${Math.round(size)}px`}
+        placeholder="blur"
+        blurDataURL={SHIMMER_BLUR_DATA_URL}
         // Turbopack's dev-mode image-optimization cache doesn't bust when a
         // file is replaced at the same path (it keeps serving the
         // first-ever encode indefinitely) — these plate illustrations just

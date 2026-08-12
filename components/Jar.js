@@ -587,50 +587,50 @@ export default function Jar() {
         }}
       >
         {ITEMS.map((item, i) => (
-        <div
-          key={item.id}
-          ref={(el) => { itemElRefs.current[i] = el; }}
-          className="absolute left-0 top-0 will-change-transform"
-          // Fixed stacking order — set once from ITEMS' own array order
-          // and never touched again (the tick loop used to recompute this
-          // every frame from live physics position, which made two tiles
-          // with close y-values flicker back and forth over which one
-          // painted on top). Later entries in ITEMS render in front —
-          // reorder the array itself to change which tile is "official"
-          // on top, not this line.
-          //
-          // transform: translate(-9999px,-9999px) by default — without
-          // this, the very first paint (before the physics effect below
-          // has run even once) rendered every tile at this div's own
-          // untransformed left-0/top-0 position, stacked on top of each
-          // other near the top of the jar box. That's the "random icon in
-          // the middle of the screen" flash on load: whichever tile has
-          // the highest z-index was briefly visible there until the first
-          // animation frame moved it to its real off-screen spawn point.
-          // Parking it off-canvas from the very first render closes that
-          // gap entirely.
-          style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1, transform: "translate(-9999px, -9999px)" }}
-        >
-          {item.mediaType === "video" ? (
-            <video
-              src={item.src}
-              muted
-              loop
-              playsInline
-              autoPlay
-              className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-            />
-          ) : (
-            <Image
-              src={item.src}
-              alt={item.alt}
-              width={1200}
-              height={1280}
-              draggable={false}
-              className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-            />
-          )}
-        </div>
+          <div
+            key={item.id}
+            ref={(el) => { itemElRefs.current[i] = el; }}
+            className="absolute left-0 top-0 will-change-transform"
+            // Fixed stacking order — set once from ITEMS' own array order
+            // and never touched again (the tick loop used to recompute this
+            // every frame from live physics position, which made two tiles
+            // with close y-values flicker back and forth over which one
+            // painted on top). Later entries in ITEMS render in front —
+            // reorder the array itself to change which tile is "official"
+            // on top, not this line.
+            //
+            // transform: translate(-9999px,-9999px) by default — without
+            // this, the very first paint (before the physics effect below
+            // has run even once) rendered every tile at this div's own
+            // untransformed left-0/top-0 position, stacked on top of each
+            // other near the top of the jar box. That's the "random icon in
+            // the middle of the screen" flash on load: whichever tile has
+            // the highest z-index was briefly visible there until the first
+            // animation frame moved it to its real off-screen spawn point.
+            // Parking it off-canvas from the very first render closes that
+            // gap entirely.
+            style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1, transform: "translate(-9999px, -9999px)" }}
+          >
+            {item.mediaType === "video" ? (
+              <video
+                src={item.src}
+                muted
+                loop
+                playsInline
+                autoPlay
+                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+              />
+            ) : (
+              <Image
+                src={item.src}
+                alt={item.alt}
+                width={1200}
+                height={1280}
+                draggable={false}
+                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+              />
+            )}
+          </div>
         ))}
       </div>
 
@@ -660,7 +660,7 @@ export default function Jar() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
-        className="mt-[clamp(0.25rem,1dvh,0.5rem)] font-body text-xl font-light text-gray-500"
+        className="mt-[10px] font-body text-[22px] font-light text-gray-500"
       >
         Filled with tasteful design.
       </motion.p>

@@ -9,6 +9,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import PlateCircle from "@/components/Etc/PlateCircle";
 import { MAX_ITEM_SIZE, deriveLayout, useElementSize } from "@/components/WhatsInside/layout";
 import { ETC_CATEGORIES, ETC_PHOTOS, PLATE_IMAGES } from "@/lib/etc";
+import { SHIMMER_BLUR_DATA_URL } from "@/lib/blurPlaceholder";
 
 // Matches Carousel.tsx's own arrow styling exactly — fixed size (not scaled
 // to viewport the way the rest of this page used to be), same as the home
@@ -575,6 +576,8 @@ export default function EtcCategoryPage() {
                           fill
                           sizes="(min-width: 640px) 288px, 256px"
                           draggable={false}
+                          placeholder="blur"
+                          blurDataURL={SHIMMER_BLUR_DATA_URL}
                           className="pointer-events-none select-none object-contain"
                         />
                       </motion.div>
@@ -639,6 +642,8 @@ export default function EtcCategoryPage() {
                   className="h-auto w-auto"
                   style={{ maxHeight: "70vh", maxWidth: "100%" }}
                   sizes="700px"
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                 />
                 <p className="mt-2 text-left font-body text-xs text-gray-500">{selected.caption}</p>
               </div>

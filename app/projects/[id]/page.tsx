@@ -90,7 +90,7 @@ export default async function ProjectPage({
                 href={project.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-block rounded-full bg-[#2460A4] px-6 py-2 font-instrument-sans text-sm text-white transition-colors hover:bg-[#1c4a80]"
+                className="mt-4 inline-block rounded-full bg-[#2460A4] px-6 py-2 font-body text-sm text-white transition-colors hover:bg-[#1c4a80]"
               >
                 Visit project →
               </a>
