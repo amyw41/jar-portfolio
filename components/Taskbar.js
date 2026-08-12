@@ -7,16 +7,18 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { CASE_STUDY_PROJECT_IDS } from "@/lib/projects";
+import { scrollToWorkSection } from "@/lib/scrollToWork";
 
 const NAV_LINKS = [
   // Scrolls to the "What's inside?" projects section (id="work") on the
   // home page. Global smooth-scroll was deliberately removed (see
   // globals.css) since it fought Next's own scroll-to-top on real page
-  // navigations — this link instead gets its own explicit, scoped
-  // scrollIntoView smooth-scroll below, only when already on "/".
+  // navigations — this link instead gets its own explicit, scoped smooth
+  // scroll below, whether already on "/" (handled directly in this file) or
+  // arriving from another page (ScrollToWork.js, after landing at the top).
   { label: "Work", href: "/#work" },
-  { label: "About", href: "/etc" },
-  { label: "Play", href: "/notes" },
+  { label: "About", href: "/notes" },
+  { label: "Etc", href: "/etc" },
 ];
 
 function Logo({ linkClassName, onClick }) {
@@ -39,12 +41,13 @@ function NavLinks({ linkClassName, onLinkClick }) {
 
   // Only the "Work" link (href="/#work") has a hash to worry about. When
   // we're already on the page that hash lives on, intercept the click and
-  // scrollIntoView smoothly instead of letting the browser jump instantly —
-  // that's the one interaction on the site that should still feel animated.
-  // From any other page, this falls through to Link's normal navigation: a
-  // real route change to "/" followed by the browser's native (instant)
-  // jump to the element once it's mounted — consistent with every other
-  // page-to-page click on the site now that global smooth-scroll is gone.
+  // scroll smoothly (scrollToWorkSection, shared with ScrollToWork.js so
+  // both land in exactly the same spot) instead of letting the browser jump
+  // instantly. From any other page, this falls through to Link's normal
+  // navigation — but with `scroll={false}` below, so Next doesn't perform
+  // its own instant jump straight to the hash; ScrollToWork.js takes over
+  // once the home page has landed at the top, sliding down from there
+  // instead.
   function handleClick(e, link) {
     onLinkClick?.(e);
     const hashIndex = link.href.indexOf("#");
@@ -53,6 +56,10 @@ function NavLinks({ linkClassName, onLinkClick }) {
     const hash = link.href.slice(hashIndex + 1);
     if (pathname !== path) return;
     e.preventDefault();
+    if (hash === "work") {
+      scrollToWorkSection("smooth");
+      return;
+    }
     document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -74,6 +81,11 @@ function NavLinks({ linkClassName, onLinkClick }) {
         href={link.href}
         className={linkClassName}
         onClick={(e) => handleClick(e, link)}
+        // Disables Next's own default post-navigation scroll (top-of-page,
+        // or straight to a hash target) — only matters for links with a
+        // hash, since those are the only ones Next would otherwise try to
+        // jump somewhere other than the top on its own.
+        scroll={!link.href.includes("#")}
       >
         {link.label}
       </Link>

@@ -302,7 +302,7 @@ export default function EtcPage() {
   const [revealedCats, setRevealedCats] = useState<Set<EtcCategorySlug>>(new Set());
 
   return (
-    <section className="w-full px-4 pb-36 pt-6 text-center">
+    <section className="w-full px-4 pb-36 pt-12 text-center">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: exitHref ? 0 : 1, y: exitHref ? -16 : 0 }}

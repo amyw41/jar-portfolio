@@ -155,18 +155,45 @@ const BODY_SCALE = 0.75;
 const REFERENCE_WIDTH = 380;
 
 export default function Jar() {
+  // sectionRef spans the whole hero (from just below the taskbar down to
+  // past the heading), containerRef is just the small aspect-ratio jar-art
+  // box centered inside it. The tiles-clipping layer below is now sized to
+  // sectionRef, not containerRef, so falling tiles are visible the entire
+  // way down from near the taskbar instead of only once they cross into the
+  // jar box's own (much shorter) bounds. renderOffsetRef holds the measured
+  // gap between the two so tile transforms — computed in the physics sim's
+  // own container-relative coordinate space, unchanged — can be shifted into
+  // section-relative space purely for rendering, without touching any of the
+  // physics math (walls, spawn points, collisions) below.
   const containerRef = useRef(null);
+  const sectionRef = useRef(null);
+  const tilesLayerRef = useRef(null);
   const itemElRefs = useRef([]);
   const bodiesRef = useRef([]);
   const wallsRef = useRef([]);
   const pointerRef = useRef({ x: 0, y: 0, prevX: 0, prevY: 0, active: false });
+  const renderOffsetRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    const section = sectionRef.current;
+    const tilesLayer = tilesLayerRef.current;
+    if (!container || !section || !tilesLayer) return;
+
+    // Measured against the tiles layer itself, not `section` — the layer's
+    // own left/right are pulled in by -8% (see its style below, for the
+    // overhang), so its actual on-screen origin isn't the same as section's
+    // own edge. Using section's rect here originally shifted every tile by
+    // that 8%-of-width amount, which is what threw the whole pile outside
+    // the jar outline.
+    const updateRenderOffset = () => {
+      const contRect = container.getBoundingClientRect();
+      const layerRect = tilesLayer.getBoundingClientRect();
+      renderOffsetRef.current = { x: contRect.left - layerRect.left, y: contRect.top - layerRect.top };
+    };
 
     const engine = Matter.Engine.create();
-    engine.gravity.y = 2.6;
+    engine.gravity.y = 4.2;
     engine.positionIterations = 10;
     engine.velocityIterations = 8;
 
@@ -176,6 +203,7 @@ export default function Jar() {
     // Capped at 1 since the container never exceeds REFERENCE_WIDTH (its own
     // max-w-[380px]) — this only ever scales items down, never up.
     const scale = Math.min(width / REFERENCE_WIDTH, 1);
+    updateRenderOffset();
 
     const wallThickness = 40;
     const makeWalls = (w, h) => [
@@ -355,7 +383,13 @@ export default function Jar() {
           if (!el) return;
           const halfW = visualHalfW[i];
           const halfH = visualHalfH[i];
-          el.style.transform = `translate(${body.position.x - halfW}px, ${body.position.y - halfH}px) rotate(${body.angle}rad)`;
+          // Physics stays entirely in container-relative coordinates (walls,
+          // spawn points, collisions above are all untouched) — this offset
+          // is added only here, at render time, to place that same position
+          // correctly within the now section-sized tiles layer (see
+          // renderOffsetRef's own comment above).
+          const { x: offX, y: offY } = renderOffsetRef.current;
+          el.style.transform = `translate(${body.position.x - halfW + offX}px, ${body.position.y - halfH + offY}px) rotate(${body.angle}rad)`;
         });
 
       } catch (err) {
@@ -386,11 +420,17 @@ export default function Jar() {
     };
     const onTouchEnd = () => { pointerRef.current.active = false; };
 
-    container.addEventListener("mousemove", onMouseMove);
-    container.addEventListener("mouseleave", onMouseLeave);
-    container.addEventListener("touchmove", onTouchMove, { passive: false });
-    container.addEventListener("touchend", onTouchEnd);
-    container.addEventListener("touchcancel", onTouchEnd);
+    // Attached to `section` (not `container`) now that tiles render as a
+    // section-level layer instead of nested inside container — a hovered
+    // tile's own ancestor chain no longer passes through container, so a
+    // listener there would stop firing for most of the visible pile.
+    // updatePointer itself still measures against container's own rect
+    // below, keeping pointer coordinates in the same space physics expects.
+    section.addEventListener("mousemove", onMouseMove);
+    section.addEventListener("mouseleave", onMouseLeave);
+    section.addEventListener("touchmove", onTouchMove, { passive: false });
+    section.addEventListener("touchend", onTouchEnd);
+    section.addEventListener("touchcancel", onTouchEnd);
 
     const onResize = () => {
       const r = container.getBoundingClientRect();
@@ -398,6 +438,7 @@ export default function Jar() {
       const newWalls = makeWalls(r.width, r.height);
       wallsRef.current = newWalls;
       Matter.World.add(engine.world, newWalls);
+      updateRenderOffset();
 
       // Keeps the rendered image sizes proportional after an orientation
       // change or window resize. Bodies/hitboxes intentionally aren't
@@ -414,16 +455,21 @@ export default function Jar() {
         el.style.height = `${ITEMS[i].size * newScale * ITEM_RATIO}px`;
       });
     };
+    // Observes both — container resizing (e.g. its own max-width kicking in)
+    // and the tiles layer resizing (e.g. the taskbar's height changing, or
+    // the viewport itself) can each change the offset between them even
+    // when the other stays fixed.
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
+    resizeObserver.observe(tilesLayer);
 
     return () => {
       cancelAnimationFrame(rafId);
-      container.removeEventListener("mousemove", onMouseMove);
-      container.removeEventListener("mouseleave", onMouseLeave);
-      container.removeEventListener("touchmove", onTouchMove);
-      container.removeEventListener("touchend", onTouchEnd);
-      container.removeEventListener("touchcancel", onTouchEnd);
+      section.removeEventListener("mousemove", onMouseMove);
+      section.removeEventListener("mouseleave", onMouseLeave);
+      section.removeEventListener("touchmove", onTouchMove);
+      section.removeEventListener("touchend", onTouchEnd);
+      section.removeEventListener("touchcancel", onTouchEnd);
       resizeObserver.disconnect();
       Matter.Events.off(engine, "collisionStart", onCollisionStart);
       Matter.World.clear(engine.world);
@@ -433,7 +479,8 @@ export default function Jar() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-4 text-center"
+      ref={sectionRef}
+      className="relative flex flex-col items-center justify-center px-4 text-center touch-none"
       style={{
         // --taskbar-height is measured live from the actual header (see
         // Taskbar.js) instead of a hardcoded rem guess, so this always
@@ -493,67 +540,83 @@ export default function Jar() {
           unoptimized={process.env.NODE_ENV !== "production"}
           className="pointer-events-none object-contain"
         />
-        {/* Tiles live in their own overflow-hidden layer, separate from the
-            jar.png <Image> above — clipping this whole div (instead of the
-            shared container both it and the jar art sit in) keeps the jar's
-            own drawn lid/rim crisp regardless of where tiles get clipped.
-            overflow-hidden stops any tile from ever painting outside this
-            box — this is what keeps the pile off the sticky header above
-            it, regardless of what the physics sim does inside it. No
-            top-edge fade here (there was one, a mask-image gradient) — it
-            faded tiles out for the first 10% of the box, which read as the
-            falling tiles only becoming visible partway down instead of
-            right from the top; a hard clip here reads as them genuinely
-            falling in from the top of the page. */}
+      </div>
+
+      {/* Tiles' own overflow-hidden layer — sized to the whole section
+          (not just the small jar-art box above), per Amy's request that
+          falling tiles read as genuinely dropping in from up near the
+          taskbar, not just appearing once they cross into the jar's own
+          (much shorter) bounds. Positioned as a section-level sibling
+          rather than nested inside `container` so its clip box can be
+          taller than the jar art itself; renderOffsetRef (see the effect
+          above) shifts each tile's container-relative physics position
+          into this layer's section-relative space at render time, so
+          nothing about the physics itself (walls, spawn points, landed
+          resting spot) changes — only how much of the fall is visible
+          before it does. overflow-hidden here is still what keeps the pile
+          from ever painting above the sticky header. No top-edge fade
+          (there was one, a mask-image gradient) — it faded tiles out for
+          the first 10% of the box, which read as the falling tiles only
+          becoming visible partway down instead of right from the top; a
+          hard clip reads as them genuinely falling in from the top of the
+          page. */}
+      <div
+        ref={tilesLayerRef}
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          // Widened past the section's own left/right edges so tiles can
+          // spill a little past the jar's sides before getting clipped,
+          // matching the reference mockup's slight overhang.
+          left: "-8%",
+          right: "-8%",
+        }}
+      >
+        {ITEMS.map((item, i) => (
         <div
-          className="absolute inset-0 overflow-hidden"
-          style={{
-            // Widened past the container's own left/right edges (was flush
-            // at 0%/100%, i.e. exactly the jar art's own bounding box) so
-            // tiles can spill a little past the jar's sides before getting
-            // clipped, matching the reference mockup's slight overhang —
-            // previously anything poking out sideways got cut off right at
-            // the jar's own width, tighter than intended.
-            left: "-8%",
-            right: "-8%",
-          }}
+          key={item.id}
+          ref={(el) => { itemElRefs.current[i] = el; }}
+          className="absolute left-0 top-0 will-change-transform"
+          // Fixed stacking order — set once from ITEMS' own array order
+          // and never touched again (the tick loop used to recompute this
+          // every frame from live physics position, which made two tiles
+          // with close y-values flicker back and forth over which one
+          // painted on top). Later entries in ITEMS render in front —
+          // reorder the array itself to change which tile is "official"
+          // on top, not this line.
+          //
+          // transform: translate(-9999px,-9999px) by default — without
+          // this, the very first paint (before the physics effect below
+          // has run even once) rendered every tile at this div's own
+          // untransformed left-0/top-0 position, stacked on top of each
+          // other near the top of the jar box. That's the "random icon in
+          // the middle of the screen" flash on load: whichever tile has
+          // the highest z-index was briefly visible there until the first
+          // animation frame moved it to its real off-screen spawn point.
+          // Parking it off-canvas from the very first render closes that
+          // gap entirely.
+          style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1, transform: "translate(-9999px, -9999px)" }}
         >
-          {ITEMS.map((item, i) => (
-          <div
-            key={item.id}
-            ref={(el) => { itemElRefs.current[i] = el; }}
-            className="absolute left-0 top-0 will-change-transform"
-            // Fixed stacking order — set once from ITEMS' own array order
-            // and never touched again (the tick loop used to recompute this
-            // every frame from live physics position, which made two tiles
-            // with close y-values flicker back and forth over which one
-            // painted on top). Later entries in ITEMS render in front —
-            // reorder the array itself to change which tile is "official"
-            // on top, not this line.
-            style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1 }}
-          >
-            {item.mediaType === "video" ? (
-              <video
-                src={item.src}
-                muted
-                loop
-                playsInline
-                autoPlay
-                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-              />
-            ) : (
-              <Image
-                src={item.src}
-                alt={item.alt}
-                width={1200}
-                height={1280}
-                draggable={false}
-                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-              />
-            )}
-          </div>
-          ))}
+          {item.mediaType === "video" ? (
+            <video
+              src={item.src}
+              muted
+              loop
+              playsInline
+              autoPlay
+              className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+            />
+          ) : (
+            <Image
+              src={item.src}
+              alt={item.alt}
+              width={1200}
+              height={1280}
+              draggable={false}
+              className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+            />
+          )}
         </div>
+        ))}
       </div>
 
       {/* Delayed so the jar drawing reads as the first beat (it's already on

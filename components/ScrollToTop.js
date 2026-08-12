@@ -19,11 +19,15 @@ import { useEffect } from "react";
 // jump, not the two-step "slide then snap" motion the smooth-scroll version
 // had.
 //
-// Guarded on the presence of a hash: a link like "/#work" changes pathname
-// (e.g. navigating from a project page back to "/") *and* carries a hash
-// that should scroll to that section once the home page has mounted —
-// forcing an instant top-scroll here would fight that, so this effect steps
-// aside whenever a hash is present.
+// No longer guarded on the presence of a hash — a link like "/#work"
+// (Taskbar.js's "Work" link, navigated from anywhere other than "/") used to
+// skip this reset so it wouldn't fight the browser's own native hash-jump.
+// Taskbar.js now passes that link `scroll={false}`, so Next never performs
+// that jump in the first place, and ScrollToWork.js (mounted right after
+// this component) explicitly slides down to the section afterward — this
+// effect can unconditionally land every navigation at the top first, which
+// is exactly the "load in at the top, then slide down" beat that two-step
+// sequence needs to start from.
 export default function ScrollToTop() {
   const pathname = usePathname();
 
@@ -33,7 +37,7 @@ export default function ScrollToTop() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined" || window.location.hash) return;
+    if (typeof window === "undefined") return;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
 

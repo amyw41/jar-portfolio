@@ -4,6 +4,7 @@ import "./globals.css";
 import Taskbar from "@/components/Taskbar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import ScrollToWork from "@/components/ScrollToWork";
 
 const singsong = localFont({
   src: "../public/fonts/singsong/Singsong.otf",
@@ -71,6 +72,7 @@ export default function RootLayout({ children }) {
           doesn't interfere with sticky anywhere else on the site. */}
       <body className="flex min-h-full flex-col overflow-x-clip font-body">
         <ScrollToTop />
+        <ScrollToWork />
         <Taskbar />
         <main className="flex-1">{children}</main>
         <Footer />
