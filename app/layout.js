@@ -1,4 +1,4 @@
-import { Instrument_Serif, Instrument_Sans, Public_Sans } from "next/font/google";
+import { Instrument_Serif, Public_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import Taskbar from "@/components/Taskbar";
@@ -29,13 +29,6 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-const instrumentSans = Instrument_Sans({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-instrument-sans",
-  display: "swap",
-});
-
 const publicSans = Public_Sans({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
@@ -52,7 +45,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${singsong.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${publicSans.variable} h-full overflow-x-clip antialiased`}
+      className={`${singsong.variable} ${instrumentSerif.variable} ${publicSans.variable} h-full overflow-x-clip antialiased`}
       suppressHydrationWarning
     >
       {/* overflow-x-clip here (and on html above) — the actual fix for

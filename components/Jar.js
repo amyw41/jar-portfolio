@@ -35,6 +35,16 @@ function JarTileMedia({ item }) {
       width={1200}
       height={1280}
       draggable={false}
+      // Without `sizes`, next/image treats width={1200} as the target
+      // render size and requests ~1200-2400px versions (1x/2x) for every
+      // tile — but each tile only ever renders at up to `size` (128) CSS
+      // px (see ITEMS below), scaled down further on narrow viewports.
+      // 128px matches next.config's default imageSizes bucket exactly, so
+      // this drops each of the jar's ~12 simultaneous tile requests from a
+      // ~1-1.3MB source image down to a fraction of that instead of nearly
+      // the full source size, times twelve, all loading at once on the
+      // homepage.
+      sizes="128px"
       className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
     />
   );
