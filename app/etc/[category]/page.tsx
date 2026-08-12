@@ -326,7 +326,10 @@ export default function EtcCategoryPage() {
         // from (fading out on its way further up) instead of reversing back
         // down to the entrance's own starting point.
         animate={{ opacity: isExiting ? 0 : 1, y: isExiting ? -16 : 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        // Was 0.4s — "/etc" is the page you just came from (already
+        // loaded), so there's nothing to mask by waiting that long before
+        // navigating back to it. Shortened so the back button feels snappy.
+        transition={{ duration: 0.18, ease: "easeOut" }}
         onAnimationComplete={() => {
           if (isExiting) router.push("/etc");
         }}

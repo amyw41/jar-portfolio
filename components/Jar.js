@@ -4,6 +4,41 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
 import { motion } from "framer-motion";
+import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
+
+// Pulled out of the ITEMS.map below because useAutoPlayInView needs its own
+// ref/IntersectionObserver per tile — can't call a hook once for a whole
+// list, only once per component instance. No `autoPlay`: same reasoning as
+// every other video on the site now (see useAutoPlayInView) — starts fresh
+// from the beginning once actually scrolled into view instead of every
+// video tile trying to play at once the moment the jar mounts.
+function JarTileMedia({ item }) {
+  const videoRef = useAutoPlayInView();
+
+  if (item.mediaType === "video") {
+    return (
+      <video
+        ref={videoRef}
+        src={item.src}
+        muted
+        loop
+        playsInline
+        className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={item.src}
+      alt={item.alt}
+      width={1200}
+      height={1280}
+      draggable={false}
+      className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
+    />
+  );
+}
 
 // Each item's `top`/`left` are only the INITIAL spawn position (% of the jar
 // container) — once the physics sim takes over, real gravity/collision decide
@@ -504,9 +539,18 @@ export default function Jar() {
         minHeight: "var(--available-height)",
       }}
     >
-      <div
+      <motion.div
         ref={containerRef}
         className="relative w-full touch-none overflow-visible"
+        // Fades the jar art in once it's actually decoded (jarLoaded, same
+        // flag that gates the physics setup above) instead of on mount —
+        // mount would fade in an empty box while the image was still
+        // fetching, then have the picture pop in partway through or after
+        // the fade finished. Gating on jarLoaded means the fade and the
+        // image's own appearance always happen together.
+        initial={{ opacity: 0 }}
+        animate={{ opacity: jarLoaded ? 1 : 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         style={{
           // Matches jar.png's own real pixel ratio (1600x2257, simplified —
           // downsized from an original 5356x7556 export, same 1339:1889
@@ -555,7 +599,7 @@ export default function Jar() {
           onLoad={() => setJarLoaded(true)}
           className="pointer-events-none object-contain"
         />
-      </div>
+      </motion.div>
 
       {/* Tiles' own overflow-hidden layer — sized to the whole section
           (not just the small jar-art box above), per Amy's request that
@@ -611,25 +655,7 @@ export default function Jar() {
             // gap entirely.
             style={{ width: `${item.size}px`, height: `${item.size * ITEM_RATIO}px`, zIndex: i + 1, transform: "translate(-9999px, -9999px)" }}
           >
-            {item.mediaType === "video" ? (
-              <video
-                src={item.src}
-                muted
-                loop
-                playsInline
-                autoPlay
-                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-              />
-            ) : (
-              <Image
-                src={item.src}
-                alt={item.alt}
-                width={1200}
-                height={1280}
-                draggable={false}
-                className="pointer-events-none h-full w-full select-none rounded-md border border-gray-200 object-cover"
-              />
-            )}
+            <JarTileMedia item={item} />
           </div>
         ))}
       </div>

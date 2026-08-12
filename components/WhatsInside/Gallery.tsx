@@ -13,13 +13,17 @@ import ProjectCardText from "./ProjectCardText";
 // 2-column desktop tier that cell is exactly 662px (see Gallery's own
 // max-w-[1374px]/gap-[50px] math below), matching ProjectMedia's 662:510
 // design ratio exactly.
-function GalleryCard({
-  project,
-  column,
-}: {
-  project: PortfolioProject;
-  column: number;
-}) {
+// Fade/rise state only — no whileInView or delay of its own. The scroll
+// trigger lives once on the grid container below and propagates down to
+// every card via Framer Motion's variants inheritance, so all cards animate
+// in together as a group instead of each watching its own scroll position
+// (which used to make the second-row card lag behind the first row).
+const CARD_VARIANTS = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0 },
+};
+
+function GalleryCard({ project }: { project: PortfolioProject }) {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
 
@@ -42,10 +46,8 @@ function GalleryCard({
       onBlur={() => setHovered(false)}
       tabIndex={0}
       aria-label={`Open ${project.name}`}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.5, ease: "easeOut", delay: column * 0.08 }}
+      variants={CARD_VARIANTS}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="relative flex cursor-pointer flex-col items-start rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2460A4]"
     >
       {/* Media and text dim together, to 50%, on hover. No hover-scale-zoom
@@ -89,10 +91,19 @@ export default function Gallery() {
     // exactly 662px wide at that reference width: (1374 - 50) / 2 = 662,
     // matching ProjectMedia's own 662:510 ratio. grid-cols-1 sm:grid-cols-2
     // — 2 columns is the ceiling at every width, no lg:grid-cols-3 tier.
-    <div className="mx-auto grid w-[90.87%] max-w-[1374px] grid-cols-1 gap-[50px] sm:grid-cols-2">
-      {PORTFOLIO_PROJECTS.map((project, i) => (
-        <GalleryCard key={project.id} project={project} column={i % 2} />
+    // initial/whileInView live here now, not per-card — the grid as a whole
+    // is what the viewport check watches, so the trigger fires once based
+    // on the group's own position and every card (via CARD_VARIANTS
+    // inheritance) animates in on the same frame.
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      className="mx-auto grid w-[90.87%] max-w-[1374px] grid-cols-1 gap-[50px] sm:grid-cols-2"
+    >
+      {PORTFOLIO_PROJECTS.map((project) => (
+        <GalleryCard key={project.id} project={project} />
       ))}
-    </div>
+    </motion.div>
   );
 }

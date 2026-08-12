@@ -9,7 +9,17 @@ import ScrollToWork from "@/components/ScrollToWork";
 const singsong = localFont({
   src: "../public/fonts/singsong/Singsong.otf",
   variable: "--font-singsong",
-  display: "swap",
+  // "optional" instead of "swap" — Singsong drives the footer's infinite
+  // marquee (Footer.js), whose looping animation measures its own width in
+  // percentages (-50% translateX). If the font finishes loading *after*
+  // that width was first measured, "swap" would substitute it in and
+  // reflow the text to new (usually wider) metrics mid-animation — a
+  // sudden jump right as it happens, which is what read as "glitching".
+  // "optional" gives the font a short window (~100ms) to load before first
+  // paint and, if it's not ready by then, keeps the fallback for the rest
+  // of that page view instead of swapping in later — no more surprise
+  // reflow once the marquee's already animating.
+  display: "optional",
 });
 
 const instrumentSerif = Instrument_Serif({

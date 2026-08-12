@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { PortfolioProject } from "@/lib/projects";
+import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
 
 // Fixed 662:510 (≈1.298:1) aspect ratio for every project's media, at every
 // breakpoint — replaces the old fixed square (h-*/w-* equal) boxes that
@@ -24,19 +25,22 @@ export default function ProjectMedia({
   sizes: string;
   className?: string;
 }) {
+  const videoRef = useAutoPlayInView<HTMLVideoElement>();
+
   return (
     <div className={`relative aspect-[662/510] w-full overflow-hidden rounded-md border border-gray-200 ${className}`}>
       {project.mediaType === "video" ? (
-        // Autoplay-muted-loop — the lower-friction default for a portfolio
-        // grid, reads like a GIF with no click needed. playsInline keeps it
-        // inline (not fullscreen) on iOS, required for autoplay to work
-        // there at all.
+        // Muted-loop, but no `autoPlay` — see useAutoPlayInView, it starts
+        // this fresh from the beginning once actually scrolled into view
+        // instead of every video on the page trying to play at once on
+        // mount. playsInline keeps it inline (not fullscreen) on iOS,
+        // required for autoplay to work there at all.
         <video
+          ref={videoRef}
           src={project.media}
           muted
           loop
           playsInline
-          autoPlay
           className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
         />
       ) : (

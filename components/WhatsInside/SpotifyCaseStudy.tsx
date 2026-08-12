@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
+import TextHighlight from "@/components/WhatsInside/TextHighlight";
 
 // Load-in timing shared with every other page's mount animation (see
 // app/etc/page.tsx's heading wrapper and app/etc/[category]/page.tsx's
@@ -43,12 +45,12 @@ const SECTION_NAV = [
 // with text inside), not an empty dashed frame.
 // Text system for this page:
 //   header    — section number/title (e.g. "01 / Initial Planning"): black, medium, 28px
-//   subheader — the sub-label (e.g. "The Problem"): black/80, regular, 22px
+//   subheader — the sub-label (e.g. "The Problem"): black/60, regular, 24px
 //   content   — body copy: black/60, light, 18px
 //   frame     — text sitting inside a colorful/placeholder box: black/60, light, 24px
 const TEXT = {
   header: "font-body text-[28px] font-medium text-black text-left",
-  subheader: "font-body text-[22px] font-normal text-black/80 text-left",
+  subheader: "font-body text-[24px] font-normal text-black/60 text-left",
   content: "font-body text-[18px] font-light leading-relaxed text-black/60 text-left",
   frame: "font-body text-[22px] font-light text-black/60 text-left",
   // Same font-weight as `header` (medium) — for the mid-section group
@@ -93,18 +95,22 @@ function CaseStudyImage({
   className?: string;
   sizes?: string;
 }) {
+  const videoRef = useAutoPlayInView<HTMLVideoElement>();
+
   return (
     <div
       style={{ aspectRatio: ratio }}
       className={`relative w-full overflow-hidden rounded-[8px] ${bg ? "bg-[#EFEDF5]" : ""} ${className}`}
     >
       {video ? (
+        // No `autoPlay` — see useAutoPlayInView, starts fresh from the
+        // beginning once actually scrolled into view instead of on mount.
         <video
+          ref={videoRef}
           src={src}
           muted
           loop
           playsInline
-          autoPlay
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
@@ -214,12 +220,18 @@ function Row({
     <div className="grid grid-cols-1 md:grid-cols-[16rem_1fr] md:gap-x-12">
       <div className="md:col-start-1">
         {eyebrow && <p className={TEXT.header}>{eyebrow}</p>}
-        {/* mt-1 only when stacked under an eyebrow — unconditional before,
-            which nudged every eyebrow-less heading (e.g. "4 Key Insights")
-            4px below the top of its column, misaligning it against
-            `children`'s own now-flush top (see childrenGap's md:mt-0
-            above) instead of sitting on the same row. */}
-        <p className={`${eyebrow ? "mt-1 " : ""}${headingClassName ?? TEXT.subheader}`}>{heading}</p>
+        {/* This pair isn't like "Branding"/"Spotify's Design System" above
+            (those are a separate group-label <p> sitting outside a whole
+            *other* Row, with their own mt-2 wrapping div between two
+            distinct blocks) — eyebrow and heading here are two plain
+            sibling <p>s inside the same div, so mt-0 alone left a gap:
+            each line still carries its own line-height (the space a line
+            box leaves above/below the glyphs themselves, unrelated to
+            margin) plus the font's own internal ascent/descent padding,
+            neither of which margin-top:0 touches. Negative margin is what
+            actually pulls it in past that residual space — mt-1 only when
+            stacked under an eyebrow, same reasoning as before. */}
+        <p className={`${eyebrow ? "-mt-0.5 " : ""}${headingClassName ?? TEXT.subheader}`}>{heading}</p>
       </div>
       {children && (
         <div className={`min-w-0 md:col-start-2 ${childrenGap} ${TEXT.content}`}>{children}</div>
@@ -278,29 +290,85 @@ const META = [
   { label: "SKILLS", values: ["Product design", "Branding"] },
 ];
 
+// `body` is JSX, not a plain string — each one wraps the specific phrase
+// Amy flagged from her old site in TextHighlight, inline with the rest of
+// the sentence around it.
 const INSIGHTS = [
   {
     title: "Blend misrepresents actual listening taste",
-    body: "Spotify Blends lose user trust because they don't accurately depict users' music tastes, choosing shared songs over unique music.",
+    body: (
+      <>
+        Spotify Blends lose user trust because they{" "}
+        <TextHighlight>don&apos;t accurately depict users&apos; music tastes</TextHighlight>, choosing shared songs
+        over unique music.
+      </>
+    ),
   },
   {
     title: "Blend quality decays the longer it's used",
-    body: "Infrequent updates and an unbalanced algorithm (one friend's plays dominating) make Blend feel increasingly homogeneous and unrepresentative over time.",
+    body: (
+      <>
+        Infrequent updates and an unbalanced algorithm (one friend&apos;s plays dominating) make Blend feel{" "}
+        <TextHighlight>increasingly homogeneous and unrepresentative over time.</TextHighlight>
+      </>
+    ),
   },
   {
     title: "Blend's value is social, not musical",
-    body: "Users are drawn to Blends for the shared experience, where they compare statistics, music, etc. Losing the social hook kills engagement.",
+    body: (
+      <>
+        Users are drawn to Blends for the shared experience, where they compare statistics, music, etc.{" "}
+        <TextHighlight>Losing the social hook kills engagement.</TextHighlight>
+      </>
+    ),
   },
   {
     title: "Lack of long-term draw",
-    body: "Blend playlists are no longer relevant when the social factor is gone; users prefer listening to their own playlists, causing them to become irrelevant quick.",
+    body: (
+      <>
+        Blend playlists are no longer relevant when the social factor is gone;{" "}
+        <TextHighlight>users prefer listening to their own playlists</TextHighlight>, causing them to become
+        irrelevant quick.
+      </>
+    ),
   },
 ];
 
+// Which section is currently scrolled into view — same idea as Taskbar's
+// pathname-based active link, but there's no route to match against here
+// (these are same-page #anchor links), so "active" instead means whichever
+// Section's own element is the one actually in view right now. rootMargin
+// biases the observer toward a line near the top of the viewport (not the
+// full viewport height) so the active link swaps roughly when a section's
+// heading reaches the top, not whenever any sliver of it is visible.
+function useActiveSection(ids: string[]) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const elements = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [ids]);
+
+  return activeId;
+}
+
 // `className` supplies the full flex layout (direction/wrap/gap) so the
 // fixed sidebar version and the mobile inline-row fallback below don't
-// fight each other over a shared default. Larger, gray, un-tinted links —
-// per Amy's reference (no blue accent here).
+// fight each other over a shared default. font-instrument (serif) per
+// Amy's request; the active section (see useActiveSection) gets the site's
+// usual blue accent, same treatment Taskbar's nav links just got.
 function TableOfContents({
   className,
   style,
@@ -308,10 +376,16 @@ function TableOfContents({
   className: string;
   style?: CSSProperties;
 }) {
+  const activeId = useActiveSection(SECTION_NAV.map((s) => s.id));
+
   return (
-    <nav className={`flex text-left font-body text-lg font-light text-black/60 ${className}`} style={style}>
+    <nav className={`flex text-left font-instrument text-2xl font-light text-black/60 ${className}`} style={style}>
       {SECTION_NAV.map((s) => (
-        <a key={s.id} href={`#${s.id}`} className="text-left transition-colors hover:text-black">
+        <a
+          key={s.id}
+          href={`#${s.id}`}
+          className={`text-left transition-colors hover:text-[#2460A4] ${activeId === s.id ? "text-[#2460A4]" : ""}`}
+        >
           {s.label}
         </a>
       ))}
@@ -348,69 +422,51 @@ export default function SpotifyCaseStudy() {
           from the content by a single vertical gray rule, same border
           color used elsewhere on the site (Taskbar, ProjectMedia).
 
-          No var(--taskbar-height) anywhere in this page anymore — Taskbar.js
-          renders null on case-study routes now (see its own
-          isCaseStudyRoute check) per Amy's reference: no top navbar at all
-          here, just this sidebar with its own logo (below) running flush to
-          the true top of the viewport, top-0/h-dvh, no offset needed since
-          there's nothing above it to offset for. */}
-      <aside className="hidden lg:sticky lg:top-0 lg:z-10 lg:flex lg:h-dvh lg:w-72 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white lg:px-10 lg:py-8">
+          top-[var(--taskbar-offset)] / h-[calc(100dvh-var(--taskbar-offset))] —
+          Taskbar is back on every route now (including this one), and it's
+          *also* position:sticky top-0 with a higher z-index, so without an
+          offset the sidebar would try to stick to the same y=0 the taskbar
+          already occupies and end up sliding in underneath it.
+          --taskbar-offset (not --taskbar-height) specifically, because
+          Taskbar hides itself on scroll-down (a transform, not a layout
+          change — --taskbar-height alone stays constant even while it's
+          off-screen) — using the height var here would leave a permanent
+          gap above this sidebar once the taskbar slides away.
+          --taskbar-offset instead drops to 0 right when Taskbar does,
+          so the sidebar (and its border line) grows to fill that gap
+          instead of leaving it. The transition matches Taskbar's own
+          300ms slide so the two move in sync rather than one snapping
+          ahead of the other. No logo here anymore — Taskbar's is the only
+          one now, same reasoning as the mobile fallback removed below. */}
+      <aside className="hidden lg:sticky lg:top-[var(--taskbar-offset,var(--taskbar-height,4.375rem))] lg:z-10 lg:flex lg:h-[calc(100dvh-var(--taskbar-offset,var(--taskbar-height,4.375rem)))] lg:w-72 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white lg:px-10 lg:py-8 lg:transition-[top,height] lg:duration-300 lg:ease-in-out">
         {/* Slides in from the left on mount — the sidebar's own equivalent
             of the hero block's fade-up below, just horizontal since it sits
-            beside the content rather than above it. Logo included in the
-            same slide so it reads as one unit with the nav below it, not a
-            separately-timed piece. */}
+            beside the content rather than above it. */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={LOAD_IN_TRANSITION}
         >
-          {/* Stands in for Taskbar's own logo, which doesn't render on this
-              route — still links home, same source/size as Taskbar.js's. */}
-          <Link href="/" className="block w-fit">
-            <Image
-              src="/images/logos/logo.png"
-              alt="Amy Wang's Jar logo"
-              width={44}
-              height={44}
-              priority
-              className="h-11 w-11 object-contain"
-            />
-          </Link>
-          <TableOfContents className="mt-6 flex-col gap-3" />
+          <TableOfContents className="flex-col gap-3" />
         </motion.div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        {/* lg:pt-[100px] lines "Spotify Guessr" up with "01 Initial
-            Planning" specifically (not the logo above it) — that's the
-            sidebar's own py-8 (32px) + logo height (44px) + the gap down to
-            the nav list (mt-6, 24px) = 100px before that first link starts.
-            Update this if any of those three sidebar values change.
+        {/* lg:pt-8 lines "Spotify Guessr" up with "01 Initial Planning" —
+            both match the sidebar's own py-8 (32px), now that the sidebar's
+            content is just the nav list with nothing above it. Update this
+            if that sidebar value ever changes.
 
             pb-24 at the bottom — the sidebar is deliberately flush against
             the footer with no gap (see app/projects/[id]/page.tsx's own
             comment), but that's the sidebar's border/background, not this
             text column: without its own bottom padding, the last
             paragraph's text was butting directly up against the footer. */}
-        <div className="mx-auto w-full max-w-[1006px] px-4 pb-24 pt-8 text-left lg:px-16 lg:pt-[100px]">
-          {/* Mobile/tablet fallback for the sidebar's own logo — Taskbar
-              doesn't render on this route at all (see isCaseStudyRoute),
-              not just its desktop row, so without this there'd be no way
-              back home below the lg breakpoint either. */}
-          <Link href="/" className="mb-6 block w-fit lg:hidden">
-            <Image
-              src="/images/logos/logo.png"
-              alt="Amy Wang's Jar logo"
-              width={44}
-              height={44}
-              priority
-              className="h-11 w-11 object-contain"
-            />
-          </Link>
-
+        <div className="mx-auto w-full max-w-[1006px] px-4 pb-24 pt-8 text-left lg:px-16 lg:pt-8">
           {/* Same section links, inline — mobile/tablet fallback for the
-              sticky sidebar, which is hidden below the lg breakpoint. */}
+              sticky sidebar, which is hidden below the lg breakpoint.
+              Taskbar's own logo/home link covers mobile now too, so no
+              separate logo fallback needed here either. */}
           <TableOfContents className="mb-8 flex-row flex-wrap gap-x-6 gap-y-2 text-sm lg:hidden" />
 
           {/* Hero — title, subtitle, hero image, and the timeline/team/role/
@@ -422,10 +478,10 @@ export default function SpotifyCaseStudy() {
             animate={{ opacity: 1, y: 0 }}
             transition={LOAD_IN_TRANSITION}
           >
-            <h1 className="font-body text-[clamp(2.75rem,7.5vw,4.5rem)] font-normal leading-none tracking-[-0.04em] text-black/90">
+            <h1 className="font-instrument text-[clamp(2.75rem,7.5vw,4.5rem)] font-normal leading-none tracking-[-0.04em] text-black/90">
               Spotify Guessr
             </h1>
-            <p className="mt-3 font-body text-lg font-light text-black/70">
+            <p className="mt-3 font-body text-[20px] font-light text-black/70">
               Make your Spotify Blend more fun with a quick minigame!
             </p>
 
@@ -447,11 +503,11 @@ export default function SpotifyCaseStudy() {
                   breathing room. */}
               {META.map((m, i) => (
                 <div key={m.label} className={`text-center ${i !== 0 ? "pb-3" : ""}`}>
-                  <p className="font-body text-[22px] font-medium tracking-[-0.035em] text-black/80">
+                  <p className="font-instrument text-[28px] font-medium tracking-[-0.035em] text-black/80">
                     {m.label}
                   </p>
                   {m.values.map((v) => (
-                    <p key={v} className="mt-1 font-body text-base font-light text-black/70">
+                    <p key={v} className="mt-1 font-body text-lg font-light text-black/70">
                       {v}
                     </p>
                   ))}
@@ -485,15 +541,14 @@ export default function SpotifyCaseStudy() {
             >
               <p>
                 Every Spotify Blend begins with curiosity. People want to know: what&apos;s
-                our match percentage? What secret song do we share?
+                our match percentage? What secret song do we share? But curiosity dies
+                down. By day 2, the playlist lays in your library, forgotten.
               </p>
               <p className="mt-[36px]">
-                But curiosity dies down. By day 2, the playlist lays in your library,
-                forgotten.
-              </p>
-              <p className="mt-[36px]">
-                The problem isn&apos;t Spotify or the Blend itself; it&apos;s creating a
-                reason to return.
+                <TextHighlight>
+                  The problem isn&apos;t Spotify or the Blend itself; it&apos;s creating a
+                  reason to return.
+                </TextHighlight>
               </p>
             </Row>
 
@@ -551,8 +606,8 @@ export default function SpotifyCaseStudy() {
               }
             >
               <p>
-                I structured this project as a simulated client engagement, where my dev
-                was the client and provided me with requirements.
+                I structured this project as a simulated client engagement, where{" "}
+                <TextHighlight>my dev was the client and provided me with requirements.</TextHighlight>
               </p>
               <p className="mt-[36px]">
                 I asked him a set of questions to make sure I fully understood the vision,
@@ -597,8 +652,8 @@ export default function SpotifyCaseStudy() {
               }
             >
               <p>
-                Through analysis of 20 user survey responses (aged 17-24), I mapped out the
-                responses to better understand the problem.
+                Through analysis of <TextHighlight>20 user survey responses (aged 17-24)</TextHighlight>, I mapped
+                out the responses to better understand the problem.
               </p>
             </Row>
 
@@ -631,7 +686,6 @@ export default function SpotifyCaseStudy() {
                 </div>
               }
             >
-              <p>This revealed 4 key insights:</p>
             </Row>
 
             <Row
@@ -665,21 +719,24 @@ export default function SpotifyCaseStudy() {
             {/* Group label for the two rows below — same weight as the
                 numbered section eyebrow (medium) but sized down to the
                 24px subheader tier, since it isn't a new numbered section.
-                mt-2 (not the mt-[36px]/space-y-[72px] tiers everything else
-                on this page uses) is deliberate here: this label and the
-                row heading directly under it ("Spotify's Main App") are a
-                header/subheader pair, the same "one family" relationship as
-                Row's own eyebrow-to-heading spacing (also mt-1/mt-2, not a
-                full block gap) — mt-[72px] before the *next* row
-                ("Spotify Wrapped") is untouched, preserving the normal "40"
-                tier gap between two actually-separate rows. */}
+                -mt-0.5 (not the mt-[36px]/space-y-[72px] tiers everything
+                else on this page uses) is deliberate here: this label and
+                the row heading directly under it ("Spotify's Main App") are
+                the exact same 28px-header/24px-subheader pair as Row's own
+                eyebrow-to-heading spacing, so it uses the identical -mt-0.5 —
+                mt-2 read looser than Row's own eyebrow gap despite being the
+                same font pair, since positive margin here was adding on top
+                of the pair's shared line-height whitespace instead of
+                pulling into it. mt-[72px] before the *next* row ("Spotify
+                Wrapped") is untouched, preserving the normal "40" tier gap
+                between two actually-separate rows. */}
             <div>
               {/* TEXT.header (not the usual TEXT.groupHeader other group
                   labels on this page use) — per Amy's request, this label
                   matches "03 / Design Process" above it exactly (28px,
                   solid black, not the lighter/smaller group-label style). */}
               <p className={TEXT.header}>Spotify&apos;s Design System</p>
-              <div className="mt-2">
+              <div className="-mt-0.5">
                 <Row
                   heading="Spotify's Main App"
                   media={
@@ -703,34 +760,15 @@ export default function SpotifyCaseStudy() {
                   }
                   after={
                     <p>
-                      Familiarity was easy; I decided to stick with Spotify&apos;s iconic
-                      green as an accent color. I emulated the chaotic vibe of Wrapped with
-                      pops of neon, shapes, and by creating mascots.
+                      Familiarity was easy; I decided to stick with{" "}
+                      <TextHighlight>Spotify&apos;s iconic green as an accent color</TextHighlight>. I emulated the{" "}
+                      <TextHighlight>chaotic vibe of Wrapped with pops of neon, shapes, and by creating mascots</TextHighlight>
+                      .
                     </p>
                   }
                 />
               </div>
             </div>
-
-            <Row
-              heading="Wireframing"
-              // TEXT.header — same system as "Spotify's Design System"/
-              // "Branding" above (28px, solid black), not the default
-              // TEXT.subheader every other Row on this page uses.
-              headingClassName={TEXT.header}
-              media={
-                <CaseStudyImage
-                  src="/images/projects/spotify/lowfi.avif"
-                  alt="Low-fidelity wireframes of the Spotify Guessr screens and flow"
-                  ratio="1445/2048"
-                />
-              }
-            >
-              <p>
-                I mapped out the screens + flow using low-fidelity wireframes, ensuring
-                navigation was smooth.
-              </p>
-            </Row>
 
             {/* Same group-label pattern as "Spotify's Design System" above —
                 see that block's comment for the spacing rationale. TEXT.header
@@ -739,7 +777,7 @@ export default function SpotifyCaseStudy() {
                 other, smaller/lighter group labels. */}
             <div>
               <p className={TEXT.header}>Branding</p>
-              <div className="mt-2">
+              <div className="-mt-0.5">
                 <Row
                   heading="Mascots"
                   media={
@@ -764,6 +802,28 @@ export default function SpotifyCaseStudy() {
                 />
               </div>
             </div>
+
+            {/* Moved below Branding/Color Scheme per Amy's request — was
+                previously right after "Spotify's Design System", reading too
+                early in the flow. TEXT.header — same system as "Spotify's
+                Design System"/"Branding" above (28px, solid black), not the
+                default TEXT.subheader every other Row on this page uses. */}
+            <Row
+              heading="Wireframing"
+              headingClassName={TEXT.header}
+              media={
+                <CaseStudyImage
+                  src="/images/projects/spotify/lowfi.avif"
+                  alt="Low-fidelity wireframes of the Spotify Guessr screens and flow"
+                  ratio="1445/2048"
+                />
+              }
+            >
+              <p>
+                I mapped out the screens + flow using low-fidelity wireframes, ensuring
+                navigation was smooth.
+              </p>
+            </Row>
 
             <Row
               heading="Navigation Problem"
@@ -803,9 +863,9 @@ export default function SpotifyCaseStudy() {
                 because it cluttered the screen too much.
               </p>
               <p className="mt-[36px]">
-                So we went with the no-arrow option. Users can swipe or tap to move onto the
-                next screen. The layering is intuitive enough for the next step to be
-                obvious.
+                <TextHighlight>So we went with the no-arrow option.</TextHighlight> Users can{" "}
+                <TextHighlight>swipe or tap</TextHighlight> to move onto the next screen. The layering is intuitive
+                enough for the next step to be obvious.
               </p>
             </Row>
           </Section>

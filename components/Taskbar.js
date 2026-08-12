@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { CASE_STUDY_PROJECT_IDS } from "@/lib/projects";
 import { scrollToWorkSection } from "@/lib/scrollToWork";
 
 const NAV_LINKS = [
@@ -36,6 +35,16 @@ function Logo({ linkClassName, onClick }) {
   );
 }
 
+// "Work" (href has a "#") is never active — it's a same-page scroll target
+// on the homepage, not a real page of its own, so there's nothing for it to
+// be "on". Everything else is active on an exact pathname match, or a
+// sub-route of it ("Etc" stays highlighted on /etc/nails, not just /etc
+// itself).
+function isActiveLink(link, pathname) {
+  if (link.href.includes("#")) return false;
+  return pathname === link.href || pathname.startsWith(`${link.href}/`);
+}
+
 function NavLinks({ linkClassName, onLinkClick }) {
   const pathname = usePathname();
 
@@ -63,14 +72,23 @@ function NavLinks({ linkClassName, onLinkClick }) {
     document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
   }
 
-  return NAV_LINKS.map((link) =>
-    link.external ? (
+  return NAV_LINKS.map((link) => {
+    // Both call sites' linkClassName always include the literal
+    // "text-gray-800" base color — swap it for the active blue instead of
+    // just appending, since two "text-*" utilities on the same element
+    // don't reliably cascade in JSX class order (Tailwind's own generated
+    // stylesheet order decides which wins, not source order).
+    const activeClassName = isActiveLink(link, pathname)
+      ? linkClassName.replace(/text-gray-800/, "text-[#2460A4]")
+      : linkClassName;
+
+    return link.external ? (
       <a
         key={link.label}
         href={link.href}
         target="_blank"
         rel="noopener noreferrer"
-        className={linkClassName}
+        className={activeClassName}
         onClick={onLinkClick}
       >
         {link.label}
@@ -79,7 +97,7 @@ function NavLinks({ linkClassName, onLinkClick }) {
       <Link
         key={link.label}
         href={link.href}
-        className={linkClassName}
+        className={activeClassName}
         onClick={(e) => handleClick(e, link)}
         // Disables Next's own default post-navigation scroll (top-of-page,
         // or straight to a hash target) — only matters for links with a
@@ -89,25 +107,11 @@ function NavLinks({ linkClassName, onLinkClick }) {
       >
         {link.label}
       </Link>
-    )
-  );
-}
-
-// Case-study pages (see SpotifyCaseStudy.tsx) draw their own logo at the
-// top of their sidebar instead — a second logo directly under this header's
-// would be redundant, and the whole point of that page's request was a
-// taskbar-free look matching Amy's old Framer reference. Sharing
-// CASE_STUDY_PROJECT_IDS with lib/projects.ts (already used by
-// app/projects/[id]/page.tsx for the same "does this id have a real case
-// study" check) means adding a future case study automatically hides the
-// taskbar there too, with nothing to remember to update in two places.
-function isCaseStudyRoute(pathname) {
-  return CASE_STUDY_PROJECT_IDS.some((id) => pathname === `/projects/${id}`);
+    );
+  });
 }
 
 export default function Taskbar() {
-  const pathname = usePathname();
-  const hideOnThisRoute = isCaseStudyRoute(pathname);
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const headerRef = useRef(null);
@@ -119,14 +123,8 @@ export default function Taskbar() {
   // property on the root element means any component can read the true
   // value without prop drilling, and it self-corrects if this markup ever
   // changes, instead of drifting out of sync with a hardcoded rem guess.
-  //
-  // Depends on `hideOnThisRoute` (not just [] like before) — the header
-  // isn't unmounted on a case-study route, just rendered as null (see the
-  // early return below), so headerRef.current goes from a real node to null
-  // and back as you navigate to/from one. A plain mount-only effect would
-  // only ever see whichever state was true on Taskbar's very first mount
-  // and never re-measure after that; re-running whenever this flips
-  // reattaches the ResizeObserver to the real node once it exists again.
+  // Taskbar is always mounted now (no more per-route hide), so this only
+  // ever needs to run once on mount.
   useLayoutEffect(() => {
     const header = headerRef.current;
     if (!header) return;
@@ -143,7 +141,7 @@ export default function Taskbar() {
     const resizeObserver = new ResizeObserver(setHeightVar);
     resizeObserver.observe(header);
     return () => resizeObserver.disconnect();
-  }, [hideOnThisRoute]);
+  }, []);
 
   // Slides the header up out of view on scroll-down, back down on scroll-up
   // — rAF-throttled so it only reads scrollY once per frame. Pinned visible
@@ -184,13 +182,17 @@ export default function Taskbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [open]);
 
-  // After all hooks, not before — conditionally skipping hook calls above
-  // this point would break React's rules of hooks (the same hooks must run
-  // in the same order on every render). Rendering null here (rather than
-  // Taskbar's parent conditionally omitting it) is what lets the
-  // height-measuring effect above still react correctly to this route ever
-  // changing, since the component stays mounted throughout.
-  if (hideOnThisRoute) return null;
+  // --taskbar-height (set above) is a fixed measurement — it doesn't change
+  // just because the header's been translated off-screen, since that's a
+  // transform, not a layout change. Anything offset by that var alone (like
+  // the case-study sidebar's sticky top) stays pinned at the same distance
+  // down even once the taskbar's gone, leaving a blank gap where it used to
+  // be. This second var tracks visibility instead — 0px while hidden, the
+  // real height while visible — so anything using it collapses to fill that
+  // gap instead of leaving it.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--taskbar-offset", hidden ? "0px" : "var(--taskbar-height)");
+  }, [hidden]);
 
   return (
     <header

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -365,6 +365,18 @@ export default function EtcPage() {
   // arrived from) and only navigates once that animation actually
   // finishes. Matches the category detail page's own back-button exit.
   const [exitHref, setExitHref] = useState<string | null>(null);
+  // Next's <Link> auto-prefetches routes once they scroll into the
+  // viewport, but only in production — in dev mode every dynamic route
+  // still compiles from scratch on the first real navigation to it, which
+  // is most of why clicking a plate feels slow. Kicking off router.prefetch
+  // for all 3 category routes as soon as this page mounts (rather than
+  // waiting on each Link's own viewport-based prefetch) gives Next a head
+  // start compiling them in the background before you've even clicked one.
+  useEffect(() => {
+    for (const cat of GALLERY) {
+      router.prefetch(`/etc/${cat.slug}`);
+    }
+  }, [router]);
   // Which categories' plates have entered the viewport — the single shared
   // trigger every one of that category's photos keys off (see the photo
   // motion.div below). Each photo used to carry its own whileInView, which
@@ -384,7 +396,11 @@ export default function EtcPage() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: exitHref ? 0 : 1, y: exitHref ? -16 : 0 }}
-        transition={{ duration: exitHref ? 0.4 : SLIDE_UP_DURATION, ease: "easeOut" }}
+        // Was 0.4s on exit — with the route now prefetched (see above),
+        // there's no more upside to a long fade masking a slow navigation;
+        // it was just adding fixed delay to every single click. Shortened
+        // to still read as a deliberate transition, not a jump cut.
+        transition={{ duration: exitHref ? 0.18 : SLIDE_UP_DURATION, ease: "easeOut" }}
         onAnimationComplete={() => {
           if (exitHref) router.push(exitHref);
         }}
