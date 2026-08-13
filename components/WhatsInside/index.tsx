@@ -30,6 +30,11 @@ export default function WhatsInside() {
       className="mx-auto w-full max-w-[96rem] px-4 pb-36 pt-36 text-center"
     >
       <motion.h2
+        id="work-heading"
+        // Real scroll anchor for the "Work" link (lib/scrollToWork.ts) — it
+        // targets this heading directly instead of the section's own top
+        // edge, so the big pt-36 above doesn't turn into empty space between
+        // the header and the heading when you land here.
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.6 }}
@@ -39,11 +44,13 @@ export default function WhatsInside() {
         What&apos;s inside?
       </motion.h2>
 
+      {/* Same transition (no delay) as the heading above — they fade/slide
+          up together instead of the toggle noticeably trailing it. */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.6 }}
-        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="mt-6 flex items-center justify-center"
       >
         <div className="inline-flex overflow-hidden rounded-[5px] border border-[#2460A4] font-body text-[16px] font-normal">
@@ -74,9 +81,18 @@ export default function WhatsInside() {
           arrows off-screen) — flagged as a deliberate call, not an
           oversight, in the "fix portfolio visuals" prompt. */}
       <motion.div
+        id="work-grid"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
+        // amount: "some" (any pixel of the grid on screen), not 0.2 — the
+        // taskbar's "Work" link (lib/scrollToWork.ts) deliberately only
+        // scrolls as far as the heading, so the heading itself stays
+        // visible instead of being scrolled past. That means this grid is
+        // usually just barely peeking into view (or not at all yet) right
+        // after that scroll lands, not 20% of the way in — requiring 0.2
+        // here left it sitting invisible (opacity: 0) until the user
+        // scrolled further themselves.
+        viewport={{ once: true, amount: "some" }}
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
         className="mx-auto mt-26 w-full"
       >

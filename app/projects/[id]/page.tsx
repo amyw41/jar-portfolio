@@ -4,19 +4,19 @@ import { ArrowLeft } from "lucide-react";
 import ProjectMedia from "@/components/WhatsInside/ProjectMedia";
 import ProjectCardText from "@/components/WhatsInside/ProjectCardText";
 import SpotifyCaseStudy from "@/components/WhatsInside/SpotifyCaseStudy";
+import CyberSeaCaseStudy from "@/components/WhatsInside/CyberSeaCaseStudy";
+import SkinSproutCaseStudy from "@/components/WhatsInside/SkinSproutCaseStudy";
 import { PORTFOLIO_PROJECTS } from "@/lib/projects";
+import { ARROW_BUTTON_CLASS } from "@/lib/styles";
 
 // Projects with a full, written case study — rendered via a dedicated
 // component instead of the generic "coming soon" shell below. Keyed by
 // project id; add to this map as more case studies get written up.
 const CASE_STUDIES: Record<string, React.ComponentType> = {
   "spotify-guessr": SpotifyCaseStudy,
+  cybersea: CyberSeaCaseStudy,
+  skinsprout: SkinSproutCaseStudy,
 };
-
-// Matches the /etc category page's own back-button styling exactly
-// (app/etc/[category]/page.tsx's ARROW_BUTTON_CLASS).
-const ARROW_BUTTON_CLASS =
-  "flex h-[2.25rem] w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full border border-black/50 bg-white text-black/50 transition-colors hover:border-[#2460A4] hover:text-[#2460A4]";
 
 // Prerenders one static page per real project at build time — idiomatic for
 // a small, known list like this rather than leaving every /projects/* visit

@@ -4,17 +4,21 @@ import Image from "next/image";
 import type { PortfolioProject } from "@/lib/projects";
 import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
 
-// Fixed 662:510 (≈1.298:1) aspect ratio for every project's media, at every
-// breakpoint — replaces the old fixed square (h-*/w-* equal) boxes that
-// Carousel.tsx and Gallery.tsx each used to render inline. Centralized here
-// so the ratio and the image/video branching only need to be gotten right
-// once. Callers control the box's *width* (via their own responsive sizing
+// Fixed 846:635 (≈1.332:1, ~4:3 — matches the real 848x636 export
+// resolution of Amy's screen-recorded project videos) aspect ratio for
+// every project's media, at every breakpoint — replaces the old fixed
+// square (h-*/w-* equal) boxes that Carousel.tsx and Gallery.tsx each used
+// to render inline, and before that a slightly-off 662:510 that cropped
+// more of each video's real frame than necessary. Centralized here so the
+// ratio and the image/video branching only need to be gotten right once.
+// Callers control the box's *width* (via their own responsive sizing
 // logic); this component derives the height from that width via
 // aspect-ratio, never sets it directly.
 //
-// object-cover (not contain) — Amy's project media isn't all shot/exported
-// at exactly 662:510, and cover reads cleaner across a grid of mixed-ratio
-// sources than letterboxing would.
+// object-cover (not contain) — not every piece of project media is shot/
+// exported at exactly 846:635 (e.g. Spotify Guessr's screenshot grid), and
+// cover reads cleaner across a grid of mixed-ratio sources than
+// letterboxing would.
 export default function ProjectMedia({
   project,
   sizes,
@@ -28,7 +32,7 @@ export default function ProjectMedia({
   const videoRef = useAutoPlayInView<HTMLVideoElement>();
 
   return (
-    <div className={`relative aspect-[662/510] w-full overflow-hidden rounded-md border border-gray-200 ${className}`}>
+    <div className={`relative aspect-[846/635] w-full overflow-hidden rounded-md border border-gray-200 ${className}`}>
       {project.mediaType === "video" ? (
         // Muted-loop, but no `autoPlay` — see useAutoPlayInView, it starts
         // this fresh from the beginning once actually scrolled into view

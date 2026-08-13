@@ -54,7 +54,7 @@ function JarTileMedia({ item }) {
 // container) — once the physics sim takes over, real gravity/collision decide
 // where it actually rests. `size` is the tile's fixed px *width*; height is
 // derived everywhere below via ITEM_RATIO to match ProjectMedia.tsx's own
-// 662:510 rectangle (object-cover crops each item's media to that rectangle,
+// 846:635 rectangle (object-cover crops each item's media to that rectangle,
 // see the render loop below).
 //
 // Each real project (see lib/projects.ts) appears twice — Amy asked for the
@@ -96,7 +96,7 @@ function JarTileMedia({ item }) {
 const ITEMS = [
   {
     id: "cybersea-2",
-    src: "/images/projects/cybersea.mp4",
+    src: "/images/projects/cybersea/cybersea.mp4",
     mediaType: "video",
     alt: "Cybersea project thumbnail",
     top: 78, left: 39, size: 128, rotate: 20,
@@ -141,7 +141,7 @@ const ITEMS = [
   },
   {
     id: "cybersea",
-    src: "/images/projects/cybersea.mp4",
+    src: "/images/projects/cybersea/cybersea.mp4",
     mediaType: "video",
     alt: "Cybersea project thumbnail",
     top: 74, left: 30, size: 128, rotate: -25,
@@ -150,9 +150,9 @@ const ITEMS = [
   },
 ];
 
-// Matches ProjectMedia.tsx's own 662:510 media ratio — item.size is treated
+// Matches ProjectMedia.tsx's own 846:635 media ratio — item.size is treated
 // as width everywhere, height is always item.size * ITEM_RATIO.
-const ITEM_RATIO = 510 / 662;
+const ITEM_RATIO = 635 / 846;
 
 // Fraction of the jar container's own box (0-1). Approximates the lower body
 // of the hand-drawn glass outline as a few straight wall segments — jar.png is

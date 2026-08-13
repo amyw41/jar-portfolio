@@ -5,13 +5,13 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PORTFOLIO_PROJECTS } from "@/lib/projects";
+import { ARROW_BUTTON_CLASS } from "@/lib/styles";
+import { useCarouselStep } from "@/lib/useCarouselStep";
 import { MAX_ITEM_SIZE, NEIGHBOR_SCALE, computeLayout, useViewportWidth } from "./layout";
 import ProjectMedia from "./ProjectMedia";
 import ProjectCardText from "./ProjectCardText";
 
 const PROJECT_COUNT = PORTFOLIO_PROJECTS.length;
-const ARROW_BUTTON_CLASS =
-  "flex h-[2.25rem] w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full border border-black/50 bg-white text-black/50 transition-colors hover:border-[#2460A4] hover:text-[#2460A4]";
 // Ratio of the original desktop design (track height 448px at itemSize 360px)
 // — kept constant so the track always has enough headroom for the center
 // item's 1.3x hover/active scale without clipping it against overflow-hidden.
@@ -44,22 +44,16 @@ const WINDOW_RADIUS = 2;
 
 export default function Carousel() {
   const router = useRouter();
-  // `step` is unbounded — it just counts how many single-slot advances
-  // you've made in total, positive or negative, and is never wrapped back
-  // into 0..PROJECT_COUNT-1. That's the whole fix for the old "one item
-  // suddenly sweeps/snaps to the opposite side" bug: the old code derived
-  // each item's on-screen offset independently, as "shortest path from the
-  // wrapped index to this item" — which is correct in isolation, but as the
-  // wrapped index ticks over, the *shortest* path for whichever item sits
-  // near the halfway point can flip from one side to the other in a single
-  // step, and that one item visibly jumps across the whole track while
-  // everything else slides normally. Driving every item's position from
-  // one shared, monotonic `step` instead means there's only ever one
-  // motion happening — the whole belt shifts by exactly one slot, in one
-  // direction, together — because no individual item ever recomputes which
-  // side it's "closer" to; see `slots` below.
-  const [step, setStep] = useState(0);
-  const centerIndex = ((step % PROJECT_COUNT) + PROJECT_COUNT) % PROJECT_COUNT;
+  // step/centerIndex/goBy/goToProject: shared bookkeeping with the /etc
+  // category page's own photo wheel (see lib/useCarouselStep.ts for why
+  // `step` is unbounded rather than wrapped — the short version is that a
+  // wrapped index makes whichever item sits near the halfway point jump
+  // across the whole track in a single step, and an unbounded step avoids
+  // that entirely). Everything below this line — the window of rendered
+  // slots, each one's own position/scale/opacity — stays local to
+  // Carousel, since that part is genuinely different from the category
+  // page's arc, not duplicated; see `slots` below.
+  const { step, index: centerIndex, goBy, goTo: goToProject } = useCarouselStep(PROJECT_COUNT);
   // Which card (by id) is currently hovered/focused — only ever changes the
   // centered card's own media/text opacity (see mediaOpacity/textOpacity
   // below); a hovered neighbor doesn't dim, since only the centered card is
@@ -68,19 +62,11 @@ export default function Carousel() {
   const viewportWidth = useViewportWidth();
   const { itemSize, imageSize, spacing, containerWidth, gap, totalWidth } = computeLayout(viewportWidth, ITEM_SIZE_CEILING);
   const trackHeight = itemSize * TRACK_HEIGHT_RATIO;
-
-  const goBy = (delta: number) => setStep((s) => s + delta);
-  // Only the dot indicators need this — they can jump straight to any
-  // project, potentially several slots away, so picking the shorter
-  // direction around the loop makes sense there. The arrows/neighbor clicks
-  // never need it: they only ever move by exactly one slot (see the render
-  // loop below), so there's no "which direction" choice to make in the
-  // first place.
-  const goToProject = (targetIndex: number) => {
-    let delta = ((targetIndex - centerIndex) % PROJECT_COUNT + PROJECT_COUNT) % PROJECT_COUNT;
-    if (delta > PROJECT_COUNT / 2) delta -= PROJECT_COUNT;
-    goBy(delta);
-  };
+  // goToProject (goTo from the hook) picks whichever direction around the
+  // loop is shorter — only the dot indicators need that, since they can
+  // jump straight to any project, potentially several slots away. Arrows
+  // and neighbor clicks call goBy directly instead: they only ever move by
+  // exactly one slot, so there's no "which direction" choice to make.
 
   // Every integer `k` within WINDOW_RADIUS of `step` gets its own rendered
   // slot, mapped onto a real project by `k mod PROJECT_COUNT` — `k` itself
@@ -206,7 +192,7 @@ export default function Carousel() {
                       in layout.ts) so a project reads as the same size in
                       both views there; below that it scales down with the
                       rest of the carousel to stay on-screen. Height comes
-                      from ProjectMedia's own fixed 662:510 aspect ratio, not
+                      from ProjectMedia's own fixed 846:635 aspect ratio, not
                       set here. */}
                   <motion.div
                     animate={{ opacity: mediaOpacity }}

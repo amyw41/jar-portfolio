@@ -21,16 +21,22 @@ export default function ScrollToWork() {
     if (typeof window === "undefined") return;
     if (pathname !== "/" || window.location.hash !== "#work") return;
 
-    // One frame so this runs after ScrollToTop's own instant reset-to-0
-    // above has actually taken effect, rather than racing it.
-    const raf = requestAnimationFrame(() => {
+    // A short delay, not just one rAF, before kicking off the smooth
+    // scroll. Landing on "/" is also exactly when Jar.js mounts fresh and
+    // does its own burst of synchronous work once the jar art loads
+    // (building the matter-js physics world, six bodies, walls, etc.) — a
+    // single rAF could still land inside that burst and starve the
+    // just-started smooth-scroll animation, which reads as this link
+    // "doing nothing." Giving the initial mount a beat to settle first
+    // makes the slide reliably show up instead of racing it.
+    const timer = setTimeout(() => {
       scrollToWorkSection("smooth");
       // Clears the hash without adding a new history entry or triggering a
       // scroll itself — keeps a later refresh/back-navigation from
       // re-triggering this same slide unexpectedly.
       window.history.replaceState(null, "", pathname);
-    });
-    return () => cancelAnimationFrame(raf);
+    }, 120);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   return null;

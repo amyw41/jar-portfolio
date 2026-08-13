@@ -23,11 +23,20 @@ const LINK_CLASS = "underline decoration-black/30 underline-offset-2 transition-
 
 export default function NotesPage() {
   return (
-    <section className="mx-auto w-full max-w-[1100px] px-4 pb-36 pt-24">
+    // Capped to exactly one viewport below the sticky header (same
+    // --taskbar-height var the /etc pages read) and centered vertically
+    // within that space, instead of the old fixed pt-24/pb-36 padding —
+    // so the bio sits in the middle of the screen on load regardless of
+    // header height, rather than starting a fixed distance from the top.
+    <section
+      className="mx-auto flex w-full max-w-[1100px] items-center px-4"
+      style={{ height: "calc(100dvh - var(--taskbar-height, 4.375rem))" }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut" }}
+        className="w-full"
       >
         {/* Single column (both items full-width, stacked) below lg — bumped up
           from md, and the photo column below now flexes instead of holding

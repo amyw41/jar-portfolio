@@ -11,8 +11,8 @@ import ProjectCardText from "./ProjectCardText";
 // it. ProjectMedia's own rounded-md is the only visual framing. Card width
 // comes entirely from the grid cell (w-full), not a fixed rem size: at the
 // 2-column desktop tier that cell is exactly 662px (see Gallery's own
-// max-w-[1374px]/gap-[50px] math below), matching ProjectMedia's 662:510
-// design ratio exactly.
+// max-w-[1374px]/gap-[50px] math below); height then follows from that
+// width via ProjectMedia's own 846:635 aspect-ratio class.
 // Fade/rise state only — no whileInView or delay of its own. The scroll
 // trigger lives once on the grid container below and propagates down to
 // every card via Framer Motion's variants inheritance, so all cards animate
@@ -88,8 +88,9 @@ export default function Gallery() {
     // trapped inside Carousel's smaller shared wrapper (the bug this
     // "fix portfolio responsiveness" prompt exists to fix). gap-[50px]
     // (both axes) + 2 columns is what makes each card's media land on
-    // exactly 662px wide at that reference width: (1374 - 50) / 2 = 662,
-    // matching ProjectMedia's own 662:510 ratio. grid-cols-1 sm:grid-cols-2
+    // exactly 662px wide at that reference width: (1374 - 50) / 2 = 662;
+    // ProjectMedia's own 846:635 ratio then sets each card's height from
+    // that width. grid-cols-1 sm:grid-cols-2
     // — 2 columns is the ceiling at every width, no lg:grid-cols-3 tier.
     // initial/whileInView live here now, not per-card — the grid as a whole
     // is what the viewport check watches, so the trigger fires once based

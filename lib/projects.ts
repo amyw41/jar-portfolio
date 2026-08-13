@@ -22,7 +22,7 @@ export type PortfolioProject = {
 // top padding on these routes — the case-study layout provides a flush
 // full-height sidebar that should run right down to the footer with no gap,
 // unlike the generic shell.
-export const CASE_STUDY_PROJECT_IDS: string[] = ["spotify-guessr"];
+export const CASE_STUDY_PROJECT_IDS: string[] = ["spotify-guessr", "cybersea", "skinsprout"];
 
 export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
@@ -36,7 +36,7 @@ export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
     id: "cybersea",
     name: "CyberSea",
-    media: "/images/projects/cybersea.mp4",
+    media: "/images/projects/cybersea/cybersea.mp4",
     mediaType: "video",
     description: "1st Overall @uOttahacks · 2026", // TODO(Amy): swap for the real tagline
     accent: "#CFE8F7",

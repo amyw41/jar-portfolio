@@ -4,18 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import PlateCircle from "@/components/Etc/PlateCircle";
 import { MAX_ITEM_SIZE, deriveLayout, useElementSize } from "@/components/WhatsInside/layout";
-import { ETC_CATEGORIES, ETC_PHOTOS, PLATE_IMAGES } from "@/lib/etc";
+import { ETC_CATEGORIES, ETC_PHOTOS, PLATE_IMAGES, type EtcPhoto } from "@/lib/etc";
 import { SHIMMER_BLUR_DATA_URL } from "@/lib/blurPlaceholder";
-
-// Matches Carousel.tsx's own arrow styling exactly — fixed size (not scaled
-// to viewport the way the rest of this page used to be), same as the home
-// page carousel.
-const ARROW_BUTTON_CLASS =
-  "flex h-[2.25rem] w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full border border-black/50 bg-white text-black/50 transition-colors hover:border-[#2460A4] hover:text-[#2460A4]";
+import { ARROW_BUTTON_CLASS } from "@/lib/styles";
+import { useCarouselStep } from "@/lib/useCarouselStep";
 // The prev/next nav arrows on the photo ring itself — bigger than
 // ARROW_BUTTON_CLASS above (which stays as-is for the fixed back link), with
 // its own NAV_ARROW_SIZE used in place of a shared value for the arc's own
@@ -103,18 +99,22 @@ export default function EtcCategoryPage() {
   // flag, lets the content fade+slide back down (the entrance in reverse),
   // and only navigates once that animation actually finishes.
   const [isExiting, setIsExiting] = useState(false);
-  // Unwrapped step count (can grow past ±photoCount across many clicks) —
-  // not the wrapped photo index. The whole row rotates by exactly one
-  // angleStep per step change (see the wheel motion.div below), so this one
-  // value driving a single spring is what makes the whole belt move as one
-  // rigid unit instead of every item re-targeting its own position
-  // independently. `index` (the actual centered photo) is just step mod
-  // photoCount, derived below once photoCount is known.
-  const [step, setStep] = useState(0);
-  // Which photo (by index into `photos`) is open in the lightbox, if any —
-  // only the centered photo is ever clickable into this (see `isCenter`
-  // below), not the neighbors.
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // photos/photoCount are computed here, before the notFound() bail-out
+  // below, and default to []/0 when category doesn't resolve — so
+  // useCarouselStep (like every other hook in this component) is always
+  // called, never skipped by an early return further down.
+  const photos: EtcPhoto[] = category ? ETC_PHOTOS[category.slug] : [];
+  const photoCount = photos.length;
+  // step/index/reset are the same bookkeeping Carousel.tsx's own belt uses
+  // (see lib/useCarouselStep.ts for why `step` itself is unbounded rather
+  // than wrapped). `advance` is this page's own name for the hook's
+  // `goBy` — every navigation action here (arrows, clicking a neighbor) is
+  // a single ±1 step, so this is the only thing that ever changes `step`.
+  // The wheel's own rotation (see angleStepDeg below) is what turns that
+  // one shared value into the whole row moving together as one rigid
+  // unit, instead of every item re-targeting its own position
+  // independently.
+  const { step, index, goBy: advance, reset } = useCarouselStep(photoCount);
   // Frozen at the design constant, not re-solved per viewport. The whole
   // composition — item spacing, arrow position, plate size, and the
   // plate's own crop line — is designed once at this one fixed size, then
@@ -143,34 +143,13 @@ export default function EtcCategoryPage() {
   const workingOffsetsRef = useRef<Map<number, number>>(new Map());
 
   useEffect(() => {
-    setStep(0);
-    setSelectedIndex(null);
+    reset();
     lastStepRef.current = -1;
     prevOffsetsRef.current = new Map();
     workingOffsetsRef.current = new Map();
-  }, [category?.slug]);
-
-  useEffect(() => {
-    if (selectedIndex === null) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedIndex(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedIndex]);
+  }, [category?.slug, reset]);
 
   if (!category) notFound();
-
-  const photos = ETC_PHOTOS[category.slug];
-  const photoCount = photos.length;
-  const index = photoCount === 0 ? 0 : ((step % photoCount) + photoCount) % photoCount;
-
-  // Advances by exactly one wheel step (±1) — every navigation action
-  // (arrows, clicking a neighbor, drag release) is a single step, so this is
-  // the only thing that ever changes `step`. Never wraps: letting it grow
-  // unbounded is what lets the wheel's own rotation (see angleStepDeg below)
-  // keep spinning smoothly through a loop boundary instead of snapping back.
-  const advance = (delta: number) => setStep((s) => s + delta);
 
   if (lastStepRef.current !== step) {
     prevOffsetsRef.current = workingOffsetsRef.current;
@@ -279,8 +258,6 @@ export default function EtcCategoryPage() {
       ? Math.min(availableSize.width / designWidth, availableSize.height / designHeight, MAX_SCALE)
       : 0;
 
-  const selected = selectedIndex !== null ? photos[selectedIndex] : null;
-
   return (
     <section
       className="relative mx-auto flex w-full max-w-[96rem] flex-col overflow-hidden px-4 pt-6 text-center"
@@ -312,7 +289,6 @@ export default function EtcCategoryPage() {
         style={{ top: "calc(var(--taskbar-height, 4.375rem) + 0.75rem)" }}
         onClick={(e) => {
           e.preventDefault();
-          setSelectedIndex(null);
           setIsExiting(true);
         }}
       >
@@ -492,10 +468,11 @@ export default function EtcCategoryPage() {
                   const isCenter = dist === 0;
                   const imageOpacity = isCenter ? 1 : dist === 1 ? 0.55 : 0;
                   // Only the immediate left/right neighbors are click
-                  // targets — they're the only non-center photos actually
-                  // visible (dist>=2 sit at opacity 0, still in the DOM but
-                  // invisible, so making them "clickable" would mean
-                  // clicking blank space). `offset` (this photo's true
+                  // targets — clicking one centers it (advancing the wheel).
+                  // The center photo itself isn't clickable (no lightbox
+                  // anymore), and dist>=2 photos sit at opacity 0, still in
+                  // the DOM but invisible, so making them "clickable" would
+                  // mean clicking blank space. `offset` (this photo's true
                   // signed distance from center, not the freeze-adjusted
                   // posOffset below) is exactly the single step that lands
                   // it in the center — the same delta an arrow click would
@@ -545,12 +522,10 @@ export default function EtcCategoryPage() {
                     <motion.button
                       type="button"
                       key={photo.src}
-                      onClick={isCenter ? () => setSelectedIndex(i) : clickable ? () => advance(offset) : undefined}
-                      aria-label={
-                        isCenter ? `Open photo: ${photo.caption}` : clickable ? `Center photo: ${photo.caption}` : undefined
-                      }
-                      aria-hidden={!isCenter && !clickable}
-                      tabIndex={isCenter || clickable ? 0 : -1}
+                      onClick={clickable ? () => advance(offset) : undefined}
+                      aria-label={clickable ? `Center photo: ${photo.caption}` : undefined}
+                      aria-hidden={!clickable}
+                      tabIndex={clickable ? 0 : -1}
                       initial={false}
                       animate={{ x: slot.x, y: slot.y, rotate: slot.rotate, scale }}
                       transition={
@@ -560,8 +535,8 @@ export default function EtcCategoryPage() {
                       }
                       style={{
                         zIndex: 10 - dist,
-                        pointerEvents: isCenter || clickable ? "auto" : "none",
-                        cursor: isCenter || clickable ? "pointer" : undefined,
+                        pointerEvents: clickable ? "auto" : "none",
+                        cursor: clickable ? "pointer" : undefined,
                         width: itemSize,
                         height: itemSize,
                       }}
@@ -594,66 +569,6 @@ export default function EtcCategoryPage() {
         </div>
         )}
       </motion.div>
-
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6"
-            onClick={() => setSelectedIndex(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              // w-fit, not a fixed 784px — the card shrink-wraps to whatever
-              // the image itself renders at (capped by max-w-[90vw] so an
-              // unusually wide photo still fits the viewport). Padding is
-              // p-14 (56px), not p-6 — the close button sits 12px inset at
-              // its own 36px size, reaching 48px in from the corner, so
-              // anything less than that would put it on top of the image
-              // instead of the white margin around it; p-14 clears that with
-              // a little room to spare, still equal on all four sides.
-              className="relative flex max-h-[95vh] w-fit max-w-[90vw] flex-col items-center justify-center overflow-hidden rounded-lg bg-white p-14 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedIndex(null)}
-                aria-label="Close"
-                className={`absolute right-3 top-3 z-10 ${ARROW_BUTTON_CLASS}`}
-              >
-                <X size={20} strokeWidth={1.25} />
-              </button>
-              {/* w-fit shrink-wraps this wrapper to its widest child (always
-                  the image, never the short caption below it), and the
-                  parent's items-center (above) centers that shrink-wrapped
-                  block as a whole in the card. items-start here then pins
-                  both children to the wrapper's own left edge — which is
-                  the image's actual left edge, since the wrapper is exactly
-                  as wide as the image — so the caption lines up under it
-                  without needing to know the image's rendered size directly. */}
-              <div className="flex w-fit max-w-full flex-col items-start">
-                <Image
-                  src={selected.src}
-                  alt={selected.caption}
-                  width={selected.width}
-                  height={selected.height}
-                  className="h-auto w-auto"
-                  style={{ maxHeight: "70vh", maxWidth: "100%" }}
-                  sizes="700px"
-                  placeholder="blur"
-                  blurDataURL={SHIMMER_BLUR_DATA_URL}
-                />
-                <p className="mt-2 text-left font-body text-xs text-gray-500">{selected.caption}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }
