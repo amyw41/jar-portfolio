@@ -11,7 +11,7 @@ const SLIDE_UP_DURATION = 0.35;
 
 // "About" bio section — labeled "About" in the taskbar, route stays "/notes"
 // (see the previous version of this file's own comment on why). Framed
-// photo on the left (me-framed.png — a single pre-composited image, photo
+// photo on the left (me-framed.webp — a single pre-composited image, photo
 // and hand-drawn frame already combined) with the bio text beside it on the
 // right, wrapped in Amy's hand-drawn border.png instead of a plain CSS
 // border.
@@ -23,20 +23,11 @@ const LINK_CLASS = "underline decoration-black/30 underline-offset-2 transition-
 
 export default function NotesPage() {
   return (
-    // Capped to exactly one viewport below the sticky header (same
-    // --taskbar-height var the /etc pages read) and centered vertically
-    // within that space, instead of the old fixed pt-24/pb-36 padding —
-    // so the bio sits in the middle of the screen on load regardless of
-    // header height, rather than starting a fixed distance from the top.
-    <section
-      className="mx-auto flex w-full max-w-[1100px] items-center px-4"
-      style={{ height: "calc(100dvh - var(--taskbar-height, 4.375rem))" }}
-    >
+    <section className="mx-auto w-full max-w-[1100px] px-4 pb-36 pt-24">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut" }}
-        className="w-full"
       >
         {/* Single column (both items full-width, stacked) below lg — bumped up
           from md, and the photo column below now flexes instead of holding
@@ -55,7 +46,7 @@ export default function NotesPage() {
               Aspect ratio is this file's own (1368x1600). */}
           <div className="relative mx-auto w-full max-w-[460px]" style={{ aspectRatio: "1368 / 1600" }}>
             <Image
-              src="/images/etc/me-framed.png"
+              src="/images/etc/me-framed.webp"
               alt="Amy standing at a bus stop, framed"
               fill
               sizes="460px"

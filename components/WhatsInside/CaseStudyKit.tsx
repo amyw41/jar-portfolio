@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
@@ -12,13 +11,6 @@ import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
 // sidebar scroll-spy nav. Each case study still owns all of its actual
 // content (copy, images, meta/insight data) and its own SECTION_NAV; only
 // the presentational shell and primitives live here.
-
-// Load-in timing shared with every other page's mount animation (see
-// app/etc/page.tsx's heading wrapper and app/etc/[category]/page.tsx's
-// content wrapper) — same duration/ease, so a case study's entrance reads
-// as consistent with the rest of the site rather than inventing its own
-// timing.
-export const LOAD_IN_TRANSITION = { duration: 0.4, ease: "easeOut" as const };
 
 // Text system every case study page uses:
 //   header    — section number/title (e.g. "01 / Initial Planning"): black, medium, 28px
@@ -320,13 +312,13 @@ function TableOfContents({
 export const HERO_RATIO = "848/636";
 
 // The hero block — title, subtitle, hero image, and the timeline/team/role/
-// skills meta box all load in together as one unit, same fade-up mount
-// animation every other page uses, rather than each piece animating
-// independently. Takes the hero media's own src/alt/video/highlightColor
-// directly (not a pre-built <CaseStudyImage/> node) so this component is
-// the one place HERO_RATIO gets applied — a case study can't accidentally
-// diverge from it the way it could if each page built its own hero image
-// element by hand.
+// skills meta box, rendered as one static unit (no mount animation — a case
+// study page already has a lot of media loading in at once on navigation, so
+// this deliberately doesn't add a fade/slide-up on top of that). Takes the
+// hero media's own src/alt/video/highlightColor directly (not a pre-built
+// <CaseStudyImage/> node) so this component is the one place HERO_RATIO gets
+// applied — a case study can't accidentally diverge from it the way it could
+// if each page built its own hero image element by hand.
 export function CaseStudyHero({
   title,
   subtitle,
@@ -345,7 +337,7 @@ export function CaseStudyHero({
   meta: { label: string; values: string[] }[];
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={LOAD_IN_TRANSITION}>
+    <div>
       <h1 className="font-instrument text-[clamp(2.75rem,7.5vw,4.5rem)] font-normal leading-none tracking-[-0.04em] text-black/90">
         {title}
       </h1>
@@ -379,7 +371,7 @@ export function CaseStudyHero({
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -424,12 +416,9 @@ export function CaseStudyLayout({ sectionNav, children }: { sectionNav: SectionN
           so the two move in sync rather than one snapping ahead of the
           other. */}
       <aside className="hidden lg:sticky lg:top-[var(--taskbar-offset,var(--taskbar-height,4.375rem))] lg:z-10 lg:flex lg:h-[calc(100dvh-var(--taskbar-offset,var(--taskbar-height,4.375rem)))] lg:w-72 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white lg:px-10 lg:py-8 lg:transition-[top,height] lg:duration-300 lg:ease-in-out">
-        {/* Slides in from the left on mount — the sidebar's own equivalent
-            of the hero block's fade-up, just horizontal since it sits
-            beside the content rather than above it. */}
-        <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={LOAD_IN_TRANSITION}>
-          <TableOfContents sectionNav={sectionNav} className="flex-col gap-3" />
-        </motion.div>
+        {/* No mount animation here — see CaseStudyHero's comment above on
+            why case study pages skip the fade/slide-in other pages use. */}
+        <TableOfContents sectionNav={sectionNav} className="flex-col gap-3" />
       </aside>
 
       <div className="min-w-0 flex-1">

@@ -104,7 +104,7 @@ export default function SpotifyCaseStudy() {
       <CaseStudyHero
         title="Spotify Guessr"
         subtitle="Make your Spotify Blend more fun with a quick minigame!"
-        heroSrc="/images/projects/spotify/spotify.png"
+        heroSrc="/images/projects/spotify/spotify.webp"
         heroAlt="Spotify Guessr app screens"
         highlightColor={HIGHLIGHT}
         meta={META}

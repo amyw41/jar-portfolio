@@ -85,7 +85,7 @@ const GALLERY: CollageCategory[] = [
     plateSize: PLATE_SIZE,
     photos: [
       {
-        src: "/images/etc/drawing1.png",
+        src: "/images/etc/drawing1.webp",
         caption: "Niu Zaizai - 2023.",
         xPct: 30,
         yPct: 10,
@@ -94,7 +94,7 @@ const GALLERY: CollageCategory[] = [
         z: 1,
       },
       {
-        src: "/images/etc/drawing2.png",
+        src: "/images/etc/drawing2.webp",
         caption: "Jo Yuri (Squid Games) - 2025.",
         xPct: 42,
         yPct: 14,
@@ -103,7 +103,7 @@ const GALLERY: CollageCategory[] = [
         z: 2,
       },
       {
-        src: "/images/etc/drawing3.png",
+        src: "/images/etc/drawing3.webp",
         caption: "Cha Woongki (AHOF) - 2023.",
         xPct: 45,
         yPct: 7,
@@ -132,7 +132,7 @@ const GALLERY: CollageCategory[] = [
     plateSize: PLATE_SIZE,
     photos: [
       {
-        src: "/images/etc/dance1.png",
+        src: "/images/etc/dance1.webp",
         caption: "Curtain call after a group recital.",
         xPct: 48,
         yPct: 34.6,
@@ -141,7 +141,7 @@ const GALLERY: CollageCategory[] = [
         z: 1,
       },
       {
-        src: "/images/etc/dance3.png",
+        src: "/images/etc/dance3.webp",
         caption: "Korean traditional hanbok dance.",
         xPct: 63,
         yPct: 37,
@@ -150,7 +150,7 @@ const GALLERY: CollageCategory[] = [
         z: 3,
       },
       {
-        src: "/images/etc/dance4.png",
+        src: "/images/etc/dance4.webp",
         caption: "Fan dance in blue stage light.",
         xPct: 32,
         yPct: 31,
@@ -161,7 +161,7 @@ const GALLERY: CollageCategory[] = [
       {
         // Swapped with dance7 ("Fan in hand, between poses") — that one,
         // not dance4, is the other "fan" photo Amy meant.
-        src: "/images/etc/dance5.png",
+        src: "/images/etc/dance5.webp",
         caption: "Extension into an arabesque.",
         xPct: 46,
         yPct: 40,
@@ -170,7 +170,7 @@ const GALLERY: CollageCategory[] = [
         z: 5,
       },
       {
-        src: "/images/etc/dance6.png",
+        src: "/images/etc/dance6.webp",
         caption: "Backstage at the Abstract Dance Challenge.",
         xPct: 14.61,
         yPct: 34,
@@ -182,7 +182,7 @@ const GALLERY: CollageCategory[] = [
         // Swapped with dance5 ("Extension into an arabesque") per Amy's
         // correction — was previously moved/nudged to rest between dance5
         // and dance3; now sits at dance5's old spot instead.
-        src: "/images/etc/dance7.png",
+        src: "/images/etc/dance7.webp",
         caption: "Fan in hand, between poses.",
         xPct: 28,
         yPct: 36.5,

@@ -28,7 +28,7 @@ export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
     id: "skinsprout",
     name: "SkinSprout",
-    media: "/images/projects/skinsprout.mp4",
+    media: "/images/projects/skinsprout/skinsprout.mp4",
     mediaType: "video",
     description: "Personal Project · 2026", // TODO(Amy): swap for the real tagline
     accent: "#FBDCE7",
@@ -44,7 +44,7 @@ export const PORTFOLIO_PROJECTS: PortfolioProject[] = [
   {
     id: "spotify-guessr",
     name: "Spotify Guessr",
-    media: "/images/projects/spotify/spotify.png",
+    media: "/images/projects/spotify/spotify.webp",
     mediaType: "image",
     description: "Webapp · 2026", // TODO(Amy): swap for the real tagline
     accent: "#DAF2DE",

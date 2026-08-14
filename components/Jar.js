@@ -105,7 +105,7 @@ const ITEMS = [
   },
   {
     id: "skinsprout",
-    src: "/images/projects/skinsprout.mp4",
+    src: "/images/projects/skinsprout/skinsprout.mp4",
     mediaType: "video",
     alt: "SkinSprout project thumbnail",
     top: 70, left: 48, size: 128, rotate: 35,
@@ -114,7 +114,7 @@ const ITEMS = [
   },
   {
     id: "spotify",
-    src: "/images/projects/spotify/spotify.png",
+    src: "/images/projects/spotify/spotify.webp",
     mediaType: "image",
     alt: "Spotify project thumbnail",
     top: 80, left: 66, size: 128, rotate: -15,
@@ -123,7 +123,7 @@ const ITEMS = [
   },
   {
     id: "skinsprout-2",
-    src: "/images/projects/skinsprout.mp4",
+    src: "/images/projects/skinsprout/skinsprout.mp4",
     mediaType: "video",
     alt: "SkinSprout project thumbnail",
     top: 76, left: 80, size: 128, rotate: -35,
@@ -132,7 +132,7 @@ const ITEMS = [
   },
   {
     id: "spotify-2",
-    src: "/images/projects/spotify/spotify.png",
+    src: "/images/projects/spotify/spotify.webp",
     mediaType: "image",
     alt: "Spotify project thumbnail",
     top: 72, left: 16, size: 128, rotate: 10,

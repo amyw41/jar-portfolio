@@ -70,6 +70,18 @@ const PERSONAS = [
   },
 ];
 
+// The 3 route-planning views shown side by side in 01/Initial Planning —
+// captions transcribed from the reference screenshot of Amy's old page.
+// CHECK: caption↔image pairing is inferred from what's actually pictured
+// in each (route1 = a nautical chart of shipping routes, route2 = a
+// colored world heatmap, route3 = navigation-software UI), not confirmed
+// against the original source directly.
+const ROUTE_VIEWS = [
+  { src: "/images/projects/cybersea/route1.avif", alt: "Arctic shipping route view 1", caption: "Current Trade Routes" },
+  { src: "/images/projects/cybersea/route2.avif", alt: "Arctic shipping route view 2", caption: "Weather Conditions" },
+  { src: "/images/projects/cybersea/route3.avif", alt: "Arctic shipping route view 3", caption: "Route Planning Application" },
+];
+
 // The web app's 3 core features, each backed by one of the real demo
 // clips dropped into public/images/projects/cybersea/.
 const FEATURES = [
@@ -115,26 +127,22 @@ export default function CyberSeaCaseStudy() {
           heading="The Thales Challenge"
           media={
             <div className="space-y-[36px]">
-              <p className={`${TEXT.content} text-center`}>3+ different views are needed to plan ONE route</p>
+              {/* Larger + centered, closer to TEXT.subheader than the
+                  usual small caption size, and all 3 images share one
+                  ratio (object-cover crops each to fit) instead of each
+                  keeping its own native height — route2 in particular was
+                  much shorter than the other two, so the row looked
+                  uneven. */}
+              <p className="text-center font-body text-[24px] font-normal text-black/60">
+                3+ different views are needed to plan ONE route!
+              </p>
               <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-3">
-                <CaseStudyImage
-                  src="/images/projects/cybersea/route1.avif"
-                  alt="Arctic shipping route view 1"
-                  ratio="512/339"
-                  highlightColor={HIGHLIGHT}
-                />
-                <CaseStudyImage
-                  src="/images/projects/cybersea/route2.avif"
-                  alt="Arctic shipping route view 2"
-                  ratio="512/230"
-                  highlightColor={HIGHLIGHT}
-                />
-                <CaseStudyImage
-                  src="/images/projects/cybersea/route3.avif"
-                  alt="Arctic shipping route view 3"
-                  ratio="512/338"
-                  highlightColor={HIGHLIGHT}
-                />
+                {ROUTE_VIEWS.map((r) => (
+                  <div key={r.src}>
+                    <CaseStudyImage src={r.src} alt={r.alt} ratio="512/320" highlightColor={HIGHLIGHT} />
+                    <p className="mt-2 text-center font-body text-sm font-light text-black/50">{r.caption}</p>
+                  </div>
+                ))}
               </div>
             </div>
           }
@@ -146,7 +154,7 @@ export default function CyberSeaCaseStudy() {
           </p>
           <p className="mt-[36px]">
             This led us to ask:{" "}
-            <TextHighlight>
+            <TextHighlight color={HIGHLIGHT}>
               &ldquo;Why is understanding the Arctic still so complicated that even
               professionals report it as overwhelming?&rdquo;
             </TextHighlight>
@@ -156,7 +164,7 @@ export default function CyberSeaCaseStudy() {
         <Row
           heading="Why does this matter?"
           media={
-            <div className="grid grid-cols-1 gap-6 rounded-[10px] p-6 text-center sm:grid-cols-3 sm:p-8" style={{ backgroundColor: HIGHLIGHT }}>
+            <div className="grid grid-cols-1 gap-6 rounded-[10px] bg-[#dde7df] p-6 text-center sm:grid-cols-3 sm:p-8">
               {/* CHECK: the three captions below are a best-effort read of
                   very small text — the stat numbers themselves (12-15%,
                   80%, 4x) were legible with confidence. */}
@@ -167,14 +175,19 @@ export default function CyberSeaCaseStudy() {
               ].map((s) => (
                 <div key={s.stat}>
                   <p className="font-body text-[32px] font-medium text-black/90">{s.stat}</p>
-                  <p className={`mt-1 ${TEXT.content}`}>{s.caption}</p>
+                  {/* Not TEXT.content directly — it bakes in text-left, which
+                      as a rule on this same element overrides the parent's
+                      text-center regardless of class order in the string. */}
+                  <p className="mt-1 font-body text-[18px] font-light leading-relaxed text-black/60 text-center">
+                    {s.caption}
+                  </p>
                 </div>
               ))}
             </div>
           }
         >
           <p>
-            <TextHighlight>
+            <TextHighlight color={HIGHLIGHT}>
               Understanding the Arctic isn&apos;t just an industry concern — it has
               real-world impacts.
             </TextHighlight>
@@ -184,38 +197,47 @@ export default function CyberSeaCaseStudy() {
 
       {/* 02 / Research */}
       <Section id="research">
-        <Row
-          eyebrow="02 / Research"
-          heading="Personas"
-          media={
-            <div className="space-y-4">
-              {PERSONAS.map((p) => (
-                <div key={p.name} className="rounded-[10px] bg-[#f7f7f7] p-6">
-                  <p className="font-body text-[18px] font-medium text-black text-left">{p.name}</p>
-                  <p className={`mt-0.5 ${TEXT.content}`}>{p.role}</p>
-
-                  <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Needs</p>
-                  <ul className={`mt-1 space-y-1 ${TEXT.content}`}>
-                    {p.needs.map((n, i) => (
-                      <li key={n} className="flex gap-2">
-                        <span aria-hidden="true">{i + 1}.</span>
-                        <span>{n}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Pain Points</p>
-                  <p className={TEXT.content}>{p.painPoints}</p>
+        {/* Personas render in `children` (the normal narrow content column),
+            not `media` (which spans full width below the label) — that
+            keeps them from stretching edge-to-edge and lets them sit
+            beside the "02 / Research" / "Personas" label instead of
+            underneath it. */}
+        <Row eyebrow="02 / Research" heading="Personas">
+          <div className="space-y-4">
+            {PERSONAS.map((p) => (
+              <div key={p.name} className="rounded-[10px] bg-[#f7f7f7] p-6">
+                <div className="flex items-center gap-3">
+                  {/* Placeholder for a real persona photo — solid circle,
+                      same idea as PlaceholderBox elsewhere on the page. */}
+                  <div className="h-12 w-12 flex-shrink-0 rounded-full bg-black" aria-hidden="true" />
+                  <p className="font-body text-[28px] font-medium text-black text-left">{p.name}</p>
                 </div>
-              ))}
-            </div>
-          }
-        />
+                <p className={`mt-2 ${TEXT.content}`}>{p.role}</p>
+
+                <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Needs</p>
+                <ul className={`mt-1 space-y-1 ${TEXT.content}`}>
+                  {p.needs.map((n, i) => (
+                    <li key={n} className="flex gap-2">
+                      <span aria-hidden="true">{i + 1}.</span>
+                      <span>{n}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Pain Points</p>
+                <p className={TEXT.content}>{p.painPoints}</p>
+              </div>
+            ))}
+          </div>
+        </Row>
 
         <Row
           heading="Problem Statement:"
           media={
-            <div className="rounded-[8px] px-6 py-[14px]" style={{ backgroundColor: HIGHLIGHT }}>
+            // Red, not the page's usual blue highlight — matches the same
+            // #fbeded shade Spotify's own case study uses for its problem/
+            // challenge callouts (see Spotify's "Challenge" boxes).
+            <div className="rounded-[8px] bg-[#fbeded] px-6 py-[14px]">
               <p className="font-body text-[22px] font-light text-black/60 text-center">
                 How might we close the gap between Arctic expertise and public
                 understanding?
@@ -232,18 +254,18 @@ export default function CyberSeaCaseStudy() {
           heading="3 main features"
           media={
             <div className="space-y-[56px]">
+              {/* Side by side, not stacked — text (label + caption, on top
+                  of each other) on the left, video on the right. Same
+                  16rem label-column width as Row's own layout, for visual
+                  consistency with the rest of the page. items-end (not
+                  items-center) bottom-aligns the text against the video. */}
               {FEATURES.map((f) => (
-                <div key={f.label}>
-                  <p className={TEXT.groupHeader}>{f.label}</p>
-                  <p className={`mt-1 ${TEXT.content}`}>{f.caption}</p>
-                  <CaseStudyImage
-                    src={f.src}
-                    alt={f.label}
-                    ratio="16/9"
-                    video
-                    highlightColor={HIGHLIGHT}
-                    className="mt-4"
-                  />
+                <div key={f.label} className="grid grid-cols-1 gap-6 sm:grid-cols-[16rem_1fr] sm:items-end">
+                  <div>
+                    <p className={TEXT.groupHeader}>{f.label}</p>
+                    <p className={`mt-1 ${TEXT.content}`}>{f.caption}</p>
+                  </div>
+                  <CaseStudyImage src={f.src} alt={f.label} ratio="16/9" video highlightColor={HIGHLIGHT} />
                 </div>
               ))}
             </div>
@@ -251,7 +273,7 @@ export default function CyberSeaCaseStudy() {
         >
           <p>
             We designed a web app that simplifies the complexities of the Arctic through{" "}
-            <TextHighlight>3 main features:</TextHighlight>
+            <TextHighlight color={HIGHLIGHT}>3 main features:</TextHighlight>
           </p>
         </Row>
       </Section>
@@ -292,19 +314,12 @@ export default function CyberSeaCaseStudy() {
         <Row
           heading="Initial Sketches"
           media={
-            <div className="space-y-2">
-              {/* Only one sketch asset exists in the repo — the original
-                  page showed this as two side-by-side labeled versions
-                  ("Version 1: Globe" / "Version 2: Ship"); CHECK whether a
-                  second sketch image should be added once available. */}
-              <p className={TEXT.content}>Version 1: Globe · Version 2: Ship</p>
-              <CaseStudyImage
-                src="/images/projects/cybersea/sketch.webp"
-                alt="Initial sketches: globe concept and ship concept"
-                ratio="1024/753"
-                highlightColor={HIGHLIGHT}
-              />
-            </div>
+            <CaseStudyImage
+              src="/images/projects/cybersea/sketch.webp"
+              alt="Initial sketches: globe concept and ship concept"
+              ratio="1024/753"
+              highlightColor={HIGHLIGHT}
+            />
           }
         />
 
@@ -316,17 +331,15 @@ export default function CyberSeaCaseStudy() {
             // "Problem" (pink) / "Solution" (green) caption; those captions
             // were too small to transcribe reliably, so CHECK this section
             // once more iteration images are available.
-            // Real asset is a tall app-screen capture (1503x2048) — capped
-            // and centered rather than stretched full-width, same idea as
-            // Spotify's own narrow "Screens" grid images.
-            <div className="mx-auto max-w-[380px]">
-              <CaseStudyImage
-                src="/images/projects/cybersea/design1.webp"
-                alt="An early design iteration of the CyberSea interface"
-                ratio="1503/2048"
-                highlightColor={HIGHLIGHT}
-              />
-            </div>
+            // Full width per Amy's request, rather than capped/centered —
+            // note the real asset is a tall portrait capture (1503x2048),
+            // so at full column width this renders quite tall.
+            <CaseStudyImage
+              src="/images/projects/cybersea/design1.webp"
+              alt="An early design iteration of the CyberSea interface"
+              ratio="1503/2048"
+              highlightColor={HIGHLIGHT}
+            />
           }
         />
       </Section>
@@ -338,9 +351,10 @@ export default function CyberSeaCaseStudy() {
           heading="CyberSea"
           media={
             <CaseStudyImage
-              src="/images/projects/cybersea/fullvid.gif"
+              src="/images/projects/cybersea/fullvid.mp4"
               alt="CyberSea final product walkthrough"
               ratio="1280/772"
+              video
               highlightColor={HIGHLIGHT}
             />
           }
@@ -358,45 +372,52 @@ export default function CyberSeaCaseStudy() {
           }
         />
 
-        <Row
-          heading="Result"
-          media={
-            <div className="rounded-[10px] bg-[#f7f7f7] p-6">
-              <p className={TEXT.content}>We&apos;re extremely proud of winning:</p>
-              <ul className={`mt-2 space-y-1 ${TEXT.content}`}>
-                <li className="flex gap-2">
-                  <span aria-hidden="true">–</span>
-                  <span>1st overall</span>
-                </li>
-                <li className="flex gap-2">
-                  <span aria-hidden="true">–</span>
-                  <span>2nd for the Thales Challenge</span>
-                </li>
-              </ul>
-            </div>
-          }
-        />
+        {/* Plain body text beside the heading (Row's `children`, same as
+            every text-only Row on the page) — no box/background, per Amy's
+            correction; it had been rendered as a colored `media` block. */}
+        <Row heading="Result">
+          <p>We&apos;re extremely proud of winning:</p>
+          <ul className="mt-2 space-y-1">
+            <li className="flex gap-2">
+              <span aria-hidden="true">–</span>
+              <span>1st overall</span>
+            </li>
+            <li className="flex gap-2">
+              <span aria-hidden="true">–</span>
+              <span>2nd for the Thales Challenge</span>
+            </li>
+          </ul>
+        </Row>
       </Section>
 
       {/* 06 / Learnings */}
       <Section id="learnings">
-        <Row eyebrow="06 / Learnings" heading="Working on a team of non-designers">
-          <p>
-            Design is often reduced to just &ldquo;making things look aesthetic,&rdquo;
-            something I especially noticed while working with a team of non-designers. I
-            often found myself in a position where teammates wanted to add a feature or
-            element that would just make the interface feel cluttered.
-          </p>
-          <p className="mt-[36px]">
-            {/* CHECK: paraphrased from a partially-legible paragraph. */}
-            That meant my job wasn&apos;t just deciding how things looked — spacing and
-            content aren&apos;t just visual choices, they shape how usable the whole
-            experience is. It taught me that a huge part of design isn&apos;t just
-            creating solutions, but{" "}
-            <TextHighlight>communicating effectively to others</TextHighlight> why those
-            solutions matter.
-          </p>
-        </Row>
+        {/* "06 / Learnings" sits above the Row instead of stacked inside its
+            own label column (Row's usual `eyebrow` prop) — that way the body
+            text lines up with "Working on a team of non-designers" (the
+            subheader) rather than with the eyebrow above it. Same -mt-0.5
+            tight-stacking idiom SpotifyCaseStudy.tsx already uses for its
+            own standalone group headers (see "Spotify's Design System"). */}
+        <p className={TEXT.header}>06 / Learnings</p>
+        <div className="-mt-0.5">
+          <Row heading="Working on a team of non-designers">
+            <p>
+              Design is often reduced to just &ldquo;making things look aesthetic,&rdquo;
+              something I especially noticed while working with a team of non-designers. I
+              often found myself in a position where teammates wanted to add a feature or
+              element that would just make the interface feel cluttered.
+            </p>
+            <p className="mt-[36px]">
+              {/* CHECK: paraphrased from a partially-legible paragraph. */}
+              That meant my job wasn&apos;t just deciding how things looked — spacing and
+              content aren&apos;t just visual choices, they shape how usable the whole
+              experience is. It taught me that a huge part of design isn&apos;t just
+              creating solutions, but{" "}
+              <TextHighlight color={HIGHLIGHT}>communicating effectively to others</TextHighlight> why those
+              solutions matter.
+            </p>
+          </Row>
+        </div>
 
         <Row heading="The Hackathon Mindset">
           {/* CHECK: this section was legible but paraphrased in places —
