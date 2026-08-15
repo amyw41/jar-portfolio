@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   CaseStudyHero,
   CaseStudyImage,
@@ -10,6 +11,7 @@ import {
   TEXT,
   type SectionNavItem,
 } from "@/components/WhatsInside/CaseStudyKit";
+import TextHighlight from "@/components/WhatsInside/TextHighlight";
 
 // SkinSprout case study — same shell/primitives as Spotify Guessr and
 // CyberSea (see CaseStudyKit.tsx), copy transcribed verbatim from Amy's own
@@ -17,12 +19,11 @@ import {
 // page as still a WIP, and a couple of spots below still show it, see the
 // `// CHECK:` comments).
 //
-// Highlight color: no explicit hex was given for this one (unlike CyberSea's
-// e5eef7) — using the project's own homepage accent (#FBDCE7, lib/projects.ts)
-// since that's the pink already associated with SkinSprout across the site,
-// and matches the pink tone visible in the source screenshots. Flag if you
-// want a different one.
-const HIGHLIGHT = "#FBDCE7";
+// Highlight color: #faf1f6, per Amy — used both as the background box color
+// (WIP banner, StatRow, Problem Statement) and as the TextHighlight color
+// below (TextHighlight has its own hardcoded default otherwise, unrelated
+// to this constant — see the CyberSea fix for the same issue).
+const HIGHLIGHT = "#faf1f6";
 
 const SECTION_NAV: SectionNavItem[] = [
   { id: "initial-planning", label: "01 Initial Planning" },
@@ -39,18 +40,107 @@ const META = [
   { label: "SKILLS", values: ["Product design", "Branding"] },
 ];
 
-const INSIGHTS = [
+// Accent color for the "Pain Points:"/"Needs:" labels on each persona card
+// — a muted plum/mauve in the reference screenshot, not black like the rest
+// of the card text. CHECK: eyeballed from the screenshot, not
+// pixel-sampled — nudge the hex if it's slightly off from the original.
+const PERSONA_ACCENT = "#9c3f72";
+
+// Persona cards for the Research section — real copy from Amy's reference
+// screenshot (photo + name, an intro bullet list, then Pain Points and
+// Needs). Same card shell as CyberSea's PERSONAS, but with a leading
+// bullet list before Pain Points/Needs instead of a single "role" line.
+const PERSONAS: {
+  name: string;
+  top: ReactNode[];
+  painPoints: string[];
+  needs: string[];
+}[] = [
+  {
+    name: "Abby",
+    top: [
+      <>
+        Skincare <strong className="font-medium">intermediate</strong> (understands to an extent)
+      </>,
+      "Loves trying new skincare",
+    ],
+    painPoints: [
+      "Forgets what products she's tried before and whether it worked or not",
+      "Spends too much $ on skincare",
+      "Difficulty finding new products that work",
+      "Can't afford a dermatologist",
+    ],
+    needs: ["A way to track her skincare history", "Customized skincare recommendations"],
+  },
+  {
+    name: "Grace",
+    top: [
+      <>
+        Skincare <strong className="font-medium">beginner</strong> (knows nothing about skincare)
+      </>,
+    ],
+    painPoints: [
+      "Wants to get into skincare but there's too much to learn!",
+      "Overwhelmed by the amount of products",
+      "Uses products that don't work",
+    ],
+    needs: [
+      "A simple app that provides skincare info",
+      "A way to track her skincare progress",
+      "Customized skincare recommendations",
+    ],
+  },
+];
+
+// CHECK: same illegibility issue — only "Aesop" was legible as a brand
+// name in the reference screenshot; the 2nd competitor's name and both
+// cards' notes are placeholder text pending the real copy.
+const COMPETITORS = [
+  {
+    name: "Aesop",
+    notes: "Placeholder notes — swap in real copy.",
+  },
+  {
+    name: "Competitor 2",
+    notes: "Placeholder notes — swap in real copy.",
+  },
+];
+
+// `body` is a ReactNode (not a plain string) so the 3 insights Amy flagged
+// as highlighted can wrap their closing clause in <TextHighlight> — the
+// 4th insight wasn't marked as highlighted in her reference, so it stays
+// plain body text.
+const INSIGHTS: { title: string; body: ReactNode }[] = [
   {
     title: "Too many voices with no way to weigh them.",
-    body: "Influencers, brands, and buzzwords all compete for trust, leaving users unable to tell good advice from marketing.",
+    body: (
+      <>
+        Influencers, brands, and buzzwords all compete for trust, leaving users{" "}
+        <TextHighlight color={HIGHLIGHT}>unable to tell good advice from marketing.</TextHighlight>
+      </>
+    ),
   },
   {
     title: "Generic advice doesn't work for everyone.",
-    body: "Broad categories like “oily” or “sensitive” hide the fact that two people can react completely differently to the same product.",
+    body: (
+      <>
+        Broad categories like “oily” or “sensitive” hide the fact that{" "}
+        <TextHighlight color={HIGHLIGHT}>
+          two people can react completely differently to the same product.
+        </TextHighlight>
+      </>
+    ),
   },
   {
     title: "Ingredients are unreadable, so cause and effect stays hidden.",
-    body: "Users can't connect a reaction to its cause when they don't understand what's in the product to begin with.",
+    body: (
+      <>
+        Users can&apos;t connect a reaction to its cause when{" "}
+        <TextHighlight color={HIGHLIGHT}>
+          they don&apos;t understand what&apos;s in the product to begin with.
+        </TextHighlight>
+      </>
+    ),
   },
   {
     title: "Without a record, past products vanish, so nothing gets learned.",
@@ -70,7 +160,13 @@ function StatRow({ stats }: { stats: { stat: string; caption: string }[] }) {
       {stats.map((s) => (
         <div key={s.stat}>
           <p className="font-body text-[32px] font-medium text-black/90">{s.stat}</p>
-          <p className={`mt-1 ${TEXT.content}`}>{s.caption}</p>
+          {/* Not TEXT.content directly — it bakes in text-left, which as a
+              rule on this same element overrides the parent's text-center
+              regardless of class order in the string (same fix as
+              CyberSea's stat row). */}
+          <p className="mt-1 font-body text-[18px] font-light leading-relaxed text-black/60 text-center">
+            {s.caption}
+          </p>
         </div>
       ))}
     </div>
@@ -83,7 +179,7 @@ export default function SkinSproutCaseStudy() {
       <CaseStudyHero
         title="SkinSprout"
         subtitle="Make skincare easier."
-        heroSrc="/images/projects/skinsprout.mp4"
+        heroSrc="/images/projects/skinsprout/skinsprout.mp4"
         heroAlt="SkinSprout app preview"
         heroVideo
         highlightColor={HIGHLIGHT}
@@ -110,26 +206,35 @@ export default function SkinSproutCaseStudy() {
                 src="/images/projects/skinsprout/current1.webp"
                 alt="A skincare recommendations app recommending a product"
                 ratio="1024/598"
-                highlightColor={HIGHLIGHT}
+                bg={false}
               />
               <CaseStudyImage
                 src="/images/projects/skinsprout/current2.avif"
                 alt="A dense skincare ingredient list"
                 ratio="1024/527"
-                highlightColor={HIGHLIGHT}
+                bg={false}
               />
             </div>
           }
           after={
             <>
               <p>
-                Even users who do know skincare have a hard time. Ingredient lists are
-                dense and never optimized for a consumer.
+                {/* CHECK: highlight placement is a best-effort read of the
+                    reference screenshot (too low-res to confirm exact word
+                    boundaries) — the position/length of the highlighted
+                    block matched this closing clause most closely. */}
+                Even users who do know skincare have a hard time.{" "}
+                <TextHighlight color={HIGHLIGHT}>
+                  Ingredient lists are dense and never optimized for a consumer.
+                </TextHighlight>
               </p>
               <p className="mt-[36px]">
-                Users are stuck choosing between two bad options: trust marketing they
-                know is unreliable, or self-educate through a system that was never
-                built to be understood.
+                {/* CHECK: same best-effort caveat as above. */}
+                Users are stuck choosing between two bad options:{" "}
+                <TextHighlight color={HIGHLIGHT}>
+                  trust marketing they know is unreliable, or self-educate through a
+                  system that was never built to be understood.
+                </TextHighlight>
               </p>
               <div className="mt-[36px]">
                 <StatRow
@@ -150,8 +255,10 @@ export default function SkinSproutCaseStudy() {
             exaggerations.
           </p>
           <p className="mt-[36px]">
-            The result: Users end up buying based on who has the biggest following, not
-            what they actually need.
+            <TextHighlight color={HIGHLIGHT}>
+              The result: Users end up buying based on who has the biggest following, not
+              what they actually need.
+            </TextHighlight>
           </p>
         </Row>
 
@@ -176,12 +283,52 @@ export default function SkinSproutCaseStudy() {
                   src: "/images/projects/skinsprout/sol3.avif",
                   alt: "A product comparison screen showing a recommended vs. not recommended product",
                 },
-              ].map((f) => (
-                <div key={f.src} className="mx-auto max-w-[280px]">
-                  <CaseStudyImage src={f.src} alt={f.alt} ratio="906/1824" highlightColor={HIGHLIGHT} />
-                  <p className={`mt-3 text-center ${TEXT.content}`}>{f.caption}</p>
-                </div>
-              ))}
+              ].map((f, i) => {
+                // Alternating sides, aligned to the BODY TEXT column, not
+                // the full media block. Row lays out as
+                // `grid-cols-[16rem_1fr] gap-x-12` (heading col + body col)
+                // and `media` spans both columns (md:col-span-2) — so its
+                // left edge sits under the heading, not under the body
+                // text, and its right edge equals the body column's right
+                // edge (both stretch to the grid's right border).
+                //
+                // Also: every class here now uses the SAME `md:` breakpoint
+                // as Row's own grid (`md:grid-cols-[16rem_1fr]`) — mixing
+                // `sm:` (640px) for the row/width switch with `md:` (768px)
+                // for the ml-[19rem] offset left a broken zone between
+                // 640-768px where the row layout kicked in without its
+                // offset, which is what produced the huge stray gap.
+                const isLeftItem = i === 1;
+                return (
+                  <div
+                    key={f.src}
+                    className={
+                      isLeftItem
+                        ? // The "left" item: phone flush to the body
+                          // column's LEFT edge (ml-[19rem] = 16rem heading
+                          // col + 3rem gap), text flush to its RIGHT edge —
+                          // spanning the box to the body column's own width
+                          // (no fixed width here, just the left offset) so
+                          // justify-between's gap is scoped to that column,
+                          // and the text lands aligned with the phone in
+                          // the item directly above it (both flush to the
+                          // same right edge).
+                          "flex flex-col items-center gap-8 md:ml-[19rem] md:flex-row md:flex-row-reverse md:justify-between"
+                        : // The "right" items: shrink to fit their own
+                          // content (phone+text+gap) and hug the body
+                          // column's right edge.
+                          "flex flex-col items-center gap-8 md:w-fit md:flex-row md:ml-auto"
+                    }
+                  >
+                    <div className="w-full md:w-[320px]">
+                      <p className={TEXT.content}>{f.caption}</p>
+                    </div>
+                    <div className="w-full md:w-[220px] flex-shrink-0">
+                      <CaseStudyImage src={f.src} alt={f.alt} ratio="906/1824" bg={false} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           }
         >
@@ -203,8 +350,13 @@ export default function SkinSproutCaseStudy() {
                 src="/images/projects/skinsprout/am.avif"
                 alt="Affinity map grouping survey responses into 4 key insight clusters"
                 ratio="1024/803"
-                highlightColor={HIGHLIGHT}
+                bg={false}
               />
+              {/* "This revealed 4 key insights:" sits here, between the map
+                  image and the insight cards, instead of in `children` above
+                  — it reads as the lead-in to the cards it sits right on top
+                  of, not as a continuation of the intro paragraph. */}
+              <p className={TEXT.content}>This revealed 4 key insights:</p>
               <div className="space-y-4">
                 {INSIGHTS.map((insight, i) => (
                   <div key={insight.title} className="flex gap-4 rounded-[10px] bg-[#f7f7f7] p-6">
@@ -220,44 +372,90 @@ export default function SkinSproutCaseStudy() {
           }
         >
           <p>
-            Through analysis of 20 user survey responses (aged 17-24), I mapped out the
-            responses to better understand the problem.
+            {/* CHECK: cross-referenced against Spotify's own Affinity Mapping
+                paragraph, which uses this exact phrase — high-confidence
+                match, not a guess from the low-res screenshot alone. */}
+            Through analysis of{" "}
+            <TextHighlight color={HIGHLIGHT}>20 user survey responses (aged 17-24)</TextHighlight>, I
+            mapped out the responses to better understand the problem.
           </p>
-          <p className="mt-[36px]">This revealed 4 key insights:</p>
         </Row>
 
-        <Row
-          heading="Personas"
-          media={
-            // CHECK: Amy's pasted text didn't include the actual persona
-            // details (names/needs/pain points) — only the intro line
-            // below. The source page shows 2 named persona cards; add them
-            // here once you've got the real copy.
-            <PlaceholderBox
-              ratio="4/3"
-              label="2 user personas"
-              highlightColor={HIGHLIGHT}
-            />
-          }
-        >
-          <p>To truly embody the issue, I created 2 personas and narrowed down our target audience.</p>
+        {/* Personas render in `children` (the normal narrow content column),
+            not `media` — keeps them from stretching edge-to-edge. No
+            eyebrow here (unlike CyberSea's own Personas row) since
+            "Affinity Mapping" above already carries "02 / Research" as the
+            first row in this section. */}
+        <Row heading="Personas">
+          <div className="space-y-4">
+            {PERSONAS.map((p) => (
+              <div key={p.name} className="rounded-[10px] bg-[#f7f7f7] p-6">
+                <div className="flex items-center gap-3">
+                  {/* Placeholder for a real persona photo — solid circle,
+                      same idea as PlaceholderBox elsewhere on the page.
+                      Swap for a real headshot if/when you have one. */}
+                  <div className="h-12 w-12 flex-shrink-0 rounded-full bg-black" aria-hidden="true" />
+                  <p className="font-body text-[28px] font-medium text-black text-left">{p.name}</p>
+                </div>
+
+                <ul className={`mt-4 space-y-1 ${TEXT.content}`}>
+                  {p.top.map((item, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span aria-hidden="true">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* "Pain Points:"/"Needs:" are the only labels here that
+                    aren't plain body copy — 2pt above TEXT.content's 18px
+                    (was 16px, smaller than the surrounding body text,
+                    which read as inconsistent rather than as a label). */}
+                <p className="mt-4 font-body text-[20px] font-semibold text-left" style={{ color: PERSONA_ACCENT }}>
+                  Pain Points:
+                </p>
+                <ul className={`mt-1 space-y-1 ${TEXT.content}`}>
+                  {p.painPoints.map((n, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span aria-hidden="true">•</span>
+                      <span>{n}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* "Pain Points:"/"Needs:" are the only labels here that
+                    aren't plain body copy — 2pt above TEXT.content's 18px
+                    (was 16px, smaller than the surrounding body text,
+                    which read as inconsistent rather than as a label). */}
+                <p className="mt-4 font-body text-[20px] font-semibold text-left" style={{ color: PERSONA_ACCENT }}>
+                  Needs:
+                </p>
+                <ul className={`mt-1 space-y-1 ${TEXT.content}`}>
+                  {p.needs.map((n, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span aria-hidden="true">•</span>
+                      <span>{n}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </Row>
 
-        <Row
-          heading="Competitive Analysis"
-          media={
-            // CHECK: no real competitive-analysis image yet.
-            <PlaceholderBox
-              ratio="4/3"
-              label="Competitive analysis of existing skincare apps"
-              highlightColor={HIGHLIGHT}
-            />
-          }
-        >
+        <Row heading="Competitive Analysis">
           <p>
             Finally, I needed to understand what the market currently looks like, so I
             conducted some quick competitive analysis!
           </p>
+          <div className="mt-[36px] space-y-4">
+            {COMPETITORS.map((c) => (
+              <div key={c.name} className="rounded-[10px] bg-[#f7f7f7] p-6">
+                <p className="font-body text-[28px] font-medium text-black text-left">{c.name}</p>
+                <p className={`mt-2 ${TEXT.content}`}>{c.notes}</p>
+              </div>
+            ))}
+          </div>
         </Row>
 
         <Row
@@ -275,24 +473,30 @@ export default function SkinSproutCaseStudy() {
 
       {/* 03 / Design Process */}
       <Section id="design-process">
-        <Row
-          eyebrow="03 / Design Process"
-          heading="Moodboard"
-          media={
-            <CaseStudyImage
-              src="/images/projects/skinsprout/moodboard.avif"
-              alt="Moodboard of skincare apps and modern, simplistic UI references"
-              ratio="1024/648"
-              highlightColor={HIGHLIGHT}
-            />
-          }
-        >
-          <p>
-            In order to fully understand the vision, I created a mood board. The main
-            inspiration was made of skincare apps and other apps with modern,
-            simplistic UI.
-          </p>
-        </Row>
+        {/* "03 / Design Process" sits above the Row instead of inside its
+            own eyebrow column, so the body text lines up with "Moodboard"
+            (the subheader) rather than with the eyebrow above it — same
+            -mt-0.5 idiom as CyberSea's "06 / Learnings" restructure. */}
+        <p className={TEXT.header}>03 / Design Process</p>
+        <div className="-mt-0.5">
+          <Row
+            heading="Moodboard"
+            media={
+              <CaseStudyImage
+                src="/images/projects/skinsprout/moodboard.avif"
+                alt="Moodboard of skincare apps and modern, simplistic UI references"
+                ratio="1024/648"
+                bg={false}
+              />
+            }
+          >
+            <p>
+              In order to fully understand the vision, I created a mood board. The main
+              inspiration was made of skincare apps and other apps with modern,
+              simplistic UI.
+            </p>
+          </Row>
+        </div>
 
         <Row
           heading="User Flow Chart"
@@ -301,15 +505,15 @@ export default function SkinSproutCaseStudy() {
               src="/images/projects/skinsprout/map.avif"
               alt="User flow chart for adding a new item to the shelf"
               ratio="1024/300"
-              highlightColor={HIGHLIGHT}
+              bg={false}
             />
           }
         >
           <p>
             I didn&apos;t feel the need to make a chart for every interaction as I
             already had a pretty good idea of what the app should look like. However, I
-            did make one for some areas where I felt unsure, such as how adding new
-            items to the shelf would look.
+            did make one for some areas where I felt unsure, such as{" "}
+            <TextHighlight color={HIGHLIGHT}>how adding new items to the shelf would look.</TextHighlight>
           </p>
         </Row>
 
@@ -324,7 +528,7 @@ export default function SkinSproutCaseStudy() {
               src="/images/projects/skinsprout/branding.avif"
               alt="SkinSprout brand mark, color palette, typography, and buttons"
               ratio="1024/590"
-              highlightColor={HIGHLIGHT}
+              bg={false}
             />
           </div>
         </div>
@@ -337,7 +541,7 @@ export default function SkinSproutCaseStudy() {
               src="/images/projects/skinsprout/wireframe.avif"
               alt="Low-fidelity wireframes of the SkinSprout screens and flow"
               ratio="1516/2048"
-              highlightColor={HIGHLIGHT}
+              bg={false}
             />
           }
         >
@@ -361,7 +565,8 @@ export default function SkinSproutCaseStudy() {
         >
           <p>
             The low-fi was my first iteration to ensure everything made sense. I tested
-            the flow with 5 users who all know different amounts of skincare.
+            the flow with{" "}
+            <TextHighlight color={HIGHLIGHT}>5 users who all know different amounts of skincare.</TextHighlight>
           </p>
         </Row>
 
@@ -395,9 +600,12 @@ export default function SkinSproutCaseStudy() {
             because it cluttered the screen too much.
           </p>
           <p className="mt-[36px]">
-            So we went with the no arrow option. Users can swipe or tap to move onto the
-            next screen. The layering is intuitive enough for the next step to be
-            obvious.
+            {/* CHECK: cross-referenced against Spotify's own Decision
+                paragraph, which uses these same phrases — high-confidence
+                match, not a guess from the low-res screenshot alone. */}
+            <TextHighlight color={HIGHLIGHT}>So we went with the no arrow option.</TextHighlight> Users
+            can <TextHighlight color={HIGHLIGHT}>swipe or tap</TextHighlight> to move onto the next
+            screen. The layering is intuitive enough for the next step to be obvious.
           </p>
         </Row>
       </Section>

@@ -214,7 +214,12 @@ export default function CyberSeaCaseStudy() {
                 </div>
                 <p className={`mt-2 ${TEXT.content}`}>{p.role}</p>
 
-                <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Needs</p>
+                {/* "Needs"/"Pain Points" labels are the only text in this
+                    card that ISN'T plain body copy — 2pt above
+                    TEXT.content's 18px (was 16px, actually smaller than
+                    the body text around it, which read as inconsistent
+                    rather than as a label standing out). */}
+                <p className="mt-4 font-body text-[20px] font-medium text-black/80 text-left">Needs</p>
                 <ul className={`mt-1 space-y-1 ${TEXT.content}`}>
                   {p.needs.map((n, i) => (
                     <li key={n} className="flex gap-2">
@@ -224,7 +229,7 @@ export default function CyberSeaCaseStudy() {
                   ))}
                 </ul>
 
-                <p className="mt-4 font-body text-[16px] font-medium text-black/80 text-left">Pain Points</p>
+                <p className="mt-4 font-body text-[20px] font-medium text-black/80 text-left">Pain Points</p>
                 <p className={TEXT.content}>{p.painPoints}</p>
               </div>
             ))}
