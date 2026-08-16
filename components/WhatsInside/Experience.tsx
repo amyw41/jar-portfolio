@@ -10,19 +10,22 @@ import FadeImage from "@/components/FadeImage";
 function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
   return (
     <div className="flex items-center gap-4 py-3">
-      {/* Fixed square, not `fill`-to-row-height — logos come in whatever
+      {/* Fixed circle, not `fill`-to-row-height — logos come in whatever
           aspect ratio each company's own brand mark is (square icon vs.
           wide wordmark), so object-contain inside a fixed box is what
           keeps every one the same visual weight in the list regardless of
-          its native shape. */}
-      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+          its native shape. rounded-full (not just rounded) + no border —
+          reads as a clean avatar-style badge instead of a bordered
+          thumbnail, and at this larger size doesn't need an outline to
+          read as its own distinct shape against the page. */}
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-white">
         <FadeImage
           src={entry.logo}
           alt={`${entry.company} logo`}
           fill
-          sizes="48px"
+          sizes="64px"
           unoptimized={process.env.NODE_ENV !== "production"}
-          className="object-contain p-1.5"
+          className="object-contain"
         />
       </div>
       <div className="text-left">
@@ -38,24 +41,25 @@ function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
 
 export default function Experience() {
   return (
-    // mx-auto w-full max-w-[640px] — About's own border-wrapped text column
+    // mx-auto w-full max-w-[760px] — About's own border-wrapped text column
     // is sized by its parent grid there (minmax(320px,1fr)); this isn't in
-    // a grid, so it needs an explicit width instead. 640px matches the
-    // `sizes` hint passed to border.png below and reads as a comfortable
-    // single reading column, similar to About's own text column width.
-    <div className="relative mx-auto w-full max-w-[640px] p-10 text-left sm:p-12">
+    // a grid, so it needs an explicit width instead. Bigger than About's
+    // ~640px text column on purpose — this frame is the whole view (no
+    // heading/copy beside it eating width), so it can afford to read
+    // larger/more prominent. sizes/p- bumped to match.
+    <div className="relative mx-auto w-full max-w-[760px] p-12 text-left sm:p-16">
       <FadeImage
         src="/images/drawings/border.png"
         alt=""
         fill
-        sizes="640px"
+        sizes="760px"
         unoptimized={process.env.NODE_ENV !== "production"}
         className="pointer-events-none object-fill"
       />
       <div className="relative">
         {EXPERIENCE.map((group) => (
-          <div key={group.label} className="mt-8 first:mt-0">
-            <h3 className="font-instrument text-[22px] text-black/80">{group.label}</h3>
+          <div key={group.label} className="mt-10 first:mt-0">
+            <h3 className="font-instrument text-[28px] text-black/80">{group.label}</h3>
             <div className="mt-1 divide-y divide-gray-100">
               {group.entries.map((entry) => (
                 <ExperienceRow key={entry.company} entry={entry} />
