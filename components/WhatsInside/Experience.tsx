@@ -14,11 +14,11 @@ function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
           aspect ratio each company's own brand mark is (square icon vs.
           wide wordmark), so object-contain inside a fixed box is what
           keeps every one the same visual weight in the list regardless of
-          its native shape. rounded-xl (slight rounding, not full circle)
-          + no border — softens the square without turning it into an
-          avatar-style badge, and at this size doesn't need an outline to
-          read as its own distinct shape against the page. */}
-      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-white">
+          its native shape. rounded-[5px] (slight rounding, not full
+          circle) + no border — softens the square without turning it into
+          an avatar-style badge, and at this size doesn't need an outline
+          to read as its own distinct shape against the page. */}
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[5px] bg-white">
         <FadeImage
           src={entry.logo}
           alt={`${entry.company} logo`}
