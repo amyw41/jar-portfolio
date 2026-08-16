@@ -10,15 +10,15 @@ import FadeImage from "@/components/FadeImage";
 function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
   return (
     <div className="flex items-center gap-4 py-3">
-      {/* Fixed circle, not `fill`-to-row-height — logos come in whatever
+      {/* Fixed square, not `fill`-to-row-height — logos come in whatever
           aspect ratio each company's own brand mark is (square icon vs.
           wide wordmark), so object-contain inside a fixed box is what
           keeps every one the same visual weight in the list regardless of
-          its native shape. rounded-full (not just rounded) + no border —
-          reads as a clean avatar-style badge instead of a bordered
-          thumbnail, and at this larger size doesn't need an outline to
+          its native shape. rounded-xl (slight rounding, not full circle)
+          + no border — softens the square without turning it into an
+          avatar-style badge, and at this size doesn't need an outline to
           read as its own distinct shape against the page. */}
-      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-white">
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-white">
         <FadeImage
           src={entry.logo}
           alt={`${entry.company} logo`}
@@ -29,11 +29,11 @@ function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
         />
       </div>
       <div className="text-left">
-        <p className="font-body text-base text-black/90">
+        <p className="font-body text-lg text-black/90">
           <span className="font-medium">{entry.company}</span>{" "}
           <span className="text-black/60">— {entry.title}</span>
         </p>
-        <p className="font-body text-sm font-light text-black/50">{entry.date}</p>
+        <p className="font-body text-base font-light text-black/50">{entry.date}</p>
       </div>
     </div>
   );
