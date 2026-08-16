@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Gallery from "./Gallery";
-import Carousel from "./Carousel";
+import Experience from "./Experience";
 
-type View = "carousel" | "gallery";
+type View = "experience" | "gallery";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "gallery", label: "Gallery" },
-  { id: "carousel", label: "Carousel" },
+  { id: "experience", label: "Experience" },
 ];
 
 // Shared fade-up shape for the heading/toggle/grid below — each one just
@@ -92,17 +92,14 @@ export default function WhatsInside() {
           </div>
         </motion.div>
 
-        {/* No longer locked to Carousel's own arrow-to-arrow width — each
-            view now sizes itself independently (Gallery caps at 1374px via
-            its own max-w-*, Carousel sizes from computeLayout) and is
-            simply centered within this full-width wrapper via its own
-            internal mx-auto. The two views intentionally end up different
-            widths; forcing them equal would mean either shrinking
-            Gallery's now much-larger spec size or blowing Carousel up to
-            match it (crowding its neighbors/arrows off-screen) — flagged
-            as a deliberate call, not an oversight, in the "fix portfolio
-            visuals" prompt. Only a small delay (0.2s) now, not a second
-            scroll-triggered wait — see the wrapper comment above. */}
+        {/* Each view sizes itself independently (Gallery caps at 1374px via
+            its own max-w-*, Experience at 640px via its own border-wrapped
+            column) and is simply centered within this full-width wrapper
+            via its own internal mx-auto — the two views intentionally end
+            up different widths, same reasoning as Gallery vs. the old
+            Carousel view this replaced. Only a small delay (0.2s) now, not
+            a second scroll-triggered wait — see the wrapper comment
+            above. */}
         <motion.div
           id="work-grid"
           variants={REVEAL_VARIANTS}
@@ -118,7 +115,7 @@ export default function WhatsInside() {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className={view === "gallery" ? "mt-[2px]" : undefined}
             >
-              {view === "gallery" ? <Gallery /> : <Carousel />}
+              {view === "gallery" ? <Gallery /> : <Experience />}
             </motion.div>
           </AnimatePresence>
         </motion.div>
