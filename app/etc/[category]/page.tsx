@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import PlateCircle from "@/components/Etc/PlateCircle";
+import FadeImage from "@/components/FadeImage";
 import { MAX_ITEM_SIZE, deriveLayout, useElementSize } from "@/components/WhatsInside/layout";
 import { ETC_CATEGORIES, ETC_PHOTOS, PLATE_IMAGES, type EtcPhoto } from "@/lib/etc";
-import { SHIMMER_BLUR_DATA_URL } from "@/lib/blurPlaceholder";
 import { ARROW_BUTTON_CLASS } from "@/lib/styles";
 import { useCarouselStep } from "@/lib/useCarouselStep";
 // The prev/next nav arrows on the photo ring itself — bigger than
@@ -548,14 +547,12 @@ export default function EtcCategoryPage() {
                         className="relative"
                         style={{ width: imageSize, height: imageSize }}
                       >
-                        <Image
+                        <FadeImage
                           src={photo.src}
                           alt={photo.caption}
                           fill
                           sizes="(min-width: 640px) 288px, 256px"
                           draggable={false}
-                          placeholder="blur"
-                          blurDataURL={SHIMMER_BLUR_DATA_URL}
                           className="pointer-events-none select-none object-contain"
                         />
                       </motion.div>
