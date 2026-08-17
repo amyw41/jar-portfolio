@@ -53,6 +53,10 @@ export default function Experience() {
         alt=""
         fill
         sizes="760px"
+        // See the About page's own use of border.png for why — default
+        // next/image quality (75) visibly softens this fine linework once
+        // actually resized to its real render width.
+        quality={95}
         unoptimized={process.env.NODE_ENV !== "production"}
         className="pointer-events-none object-fill"
       />

@@ -76,6 +76,15 @@ export default function NotesPage() {
               alt=""
               fill
               sizes="640px"
+              // Default next/image quality (75) visibly softens/artifacts
+              // thin hand-drawn linework like this once actually resized to
+              // its real ~640px render width — unlike jar.png, which has no
+              // `sizes` prop at all and so gets served near-full-resolution
+              // regardless of its own (much smaller) box, incidentally
+              // hiding this same compression at any quality. Bumped instead
+              // of removing `sizes` here, to keep the smaller/faster
+              // request this box actually needs.
+              quality={95}
               unoptimized={process.env.NODE_ENV !== "production"}
               className="pointer-events-none object-fill"
             />

@@ -339,7 +339,13 @@ export default function EtcCategoryPage() {
                 className="absolute left-1/2 -translate-x-1/2 overflow-hidden"
                 style={{ top: 0, width: plateSize, height: plateVisibleHeight }}
               >
-                <PlateCircle label="" src={PLATE_IMAGES[category.slug]} size={plateSize} className="absolute left-0 top-0" />
+                <PlateCircle
+                  label=""
+                  src={PLATE_IMAGES[category.slug]}
+                  size={plateSize}
+                  renderedSize={plateSize * scale}
+                  className="absolute left-0 top-0"
+                />
               </div>
             </div>
           </div>
@@ -376,7 +382,13 @@ export default function EtcCategoryPage() {
               className="absolute left-1/2 -translate-x-1/2 overflow-hidden"
               style={{ top: -plateGeometryRadius, width: plateSize, height: plateVisibleHeight }}
             >
-              <PlateCircle label="" src={PLATE_IMAGES[category.slug]} size={plateSize} className="absolute left-0 top-0" />
+              <PlateCircle
+                label=""
+                src={PLATE_IMAGES[category.slug]}
+                size={plateSize}
+                renderedSize={plateSize * scale}
+                className="absolute left-0 top-0"
+              />
             </div>
 
             {photoCount > 1 && (
