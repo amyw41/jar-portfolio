@@ -75,15 +75,16 @@ export default function NotesPage() {
               src="/images/drawings/border.png"
               alt=""
               fill
-              sizes="640px"
-              // Default next/image quality (75) visibly softens/artifacts
-              // thin hand-drawn linework like this once actually resized to
-              // its real ~640px render width — unlike jar.png, which has no
-              // `sizes` prop at all and so gets served near-full-resolution
-              // regardless of its own (much smaller) box, incidentally
-              // hiding this same compression at any quality. Bumped instead
-              // of removing `sizes` here, to keep the smaller/faster
-              // request this box actually needs.
+              // No `sizes` prop — matches jar.png's own (accidental, but
+              // proven-good-looking) treatment in Jar.js. Bumping `quality`
+              // alone (previously the only change here) only softened
+              // compression artifacts — it didn't fix this thin hand-drawn
+              // line visibly pixelating once actually stretched back out to
+              // real size, which is genuine under-resolution, not a
+              // compression issue. Omitting `sizes` makes next/image assume
+              // this could need full-viewport width, so it always fetches a
+              // much bigger source than this ~640px box actually needs —
+              // wasteful, but the only way this asset reliably looks sharp.
               quality={95}
               unoptimized={process.env.NODE_ENV !== "production"}
               className="pointer-events-none object-fill"

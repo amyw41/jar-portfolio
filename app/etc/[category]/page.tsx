@@ -343,7 +343,6 @@ export default function EtcCategoryPage() {
                   label=""
                   src={PLATE_IMAGES[category.slug]}
                   size={plateSize}
-                  renderedSize={plateSize * scale}
                   className="absolute left-0 top-0"
                 />
               </div>
@@ -386,7 +385,6 @@ export default function EtcCategoryPage() {
                 label=""
                 src={PLATE_IMAGES[category.slug]}
                 size={plateSize}
-                renderedSize={plateSize * scale}
                 className="absolute left-0 top-0"
               />
             </div>

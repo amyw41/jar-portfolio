@@ -13,22 +13,11 @@ export default function PlateCircle({
   label,
   src,
   size = 220,
-  // The detail page (app/etc/[category]/page.tsx) wraps this whole
-  // component in its own CSS `transform: scale(...)` afterward, to fit the
-  // composition to whatever viewport space is available — up to 1.5x
-  // bigger than `size` itself. Left at its default (`size`), next/image
-  // would only ever fetch a `size`-appropriate resolution, then the browser
-  // blows that up another 1.5x on top via the transform — real, visible
-  // upscale blur, unrelated to `quality` below. Callers doing that pass
-  // their actual post-transform on-screen size here instead, so the fetch
-  // itself already covers it.
-  renderedSize,
   className = "",
 }: {
   label: string;
   src: string;
   size?: number;
-  renderedSize?: number;
   className?: string;
 }) {
   return (
@@ -41,14 +30,22 @@ export default function PlateCircle({
         alt=""
         fill
         priority
-        sizes={`${Math.round(renderedSize ?? size)}px`}
-        // Same fix as border.png (see the About page's own comment) —
-        // default next/image quality (75) visibly softens this hand-drawn
-        // linework once resized to its real, fairly small render size.
-        // jar.png doesn't have this problem only because it has no `sizes`
-        // prop at all, so it's served near-full-resolution regardless of
-        // its box — not something to copy here, since these plates do want
-        // the smaller/faster request their real size implies.
+        // No `sizes` prop — matches jar.png's own (accidental, but
+        // proven-good-looking) treatment in Jar.js. This used to specify
+        // `sizes` (with a `renderedSize` override on the detail page, to
+        // account for that page's own CSS transform: scale() enlarging this
+        // past `size` afterward) so next/image would only fetch the exact
+        // resolution needed — but this fine hand-drawn linework visibly
+        // pixelates at that resolution once actually stretched back out to
+        // real size at any real zoom/DPR, the same issue border.png had.
+        // Omitting `sizes` makes next/image assume this could need
+        // full-viewport width, so it always fetches a much bigger source
+        // than any actual use of this component needs (small overview grid
+        // icon, larger detail-page centerpiece, or that detail page's own
+        // further CSS scale-up) — wasteful, but the only way this asset
+        // reliably looks sharp, and it also means the detail page doesn't
+        // need its own extra prop just to compensate for its transform
+        // anymore.
         quality={95}
         // Turbopack's dev-mode image-optimization cache doesn't bust when a
         // file is replaced at the same path (it keeps serving the

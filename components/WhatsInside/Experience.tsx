@@ -52,10 +52,18 @@ export default function Experience() {
         src="/images/drawings/border.png"
         alt=""
         fill
-        sizes="760px"
-        // See the About page's own use of border.png for why — default
-        // next/image quality (75) visibly softens this fine linework once
-        // actually resized to its real render width.
+        // No `sizes` prop — deliberately, matching jar.png's own (accidental,
+        // but proven-good-looking) treatment in Jar.js. A `sizes` value here
+        // told next/image + the browser this box only ever needs a
+        // ~760px-wide source, so it was correctly fetching one that small —
+        // but this thin hand-drawn linework visibly pixelates once actually
+        // stretched back out to real size at any real zoom/DPR, in a way
+        // bumping `quality` alone never fixed (that only softens compression
+        // artifacts, this is genuine under-resolution). Omitting `sizes`
+        // defaults next/image to assuming the image could need full-viewport
+        // width, so it always fetches a much bigger source than this box
+        // actually needs — wasteful, but the only way this specific asset
+        // reliably looks sharp at any zoom.
         quality={95}
         unoptimized={process.env.NODE_ENV !== "production"}
         className="pointer-events-none object-fill"
