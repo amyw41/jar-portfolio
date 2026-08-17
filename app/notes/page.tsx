@@ -144,14 +144,16 @@ export default function NotesPage() {
         instead, the bio still reads as its own complete "first screen" and
         this reads as a clearly separate second one below it, not a
         continuation competing for the same space.
-        max-w-[860px] — narrower than the bio grid's own max-w-[1100px]
-        above (was the same width at first, matching the bio grid so the
-        logo/date lined up with the photo/bio edges — Amy asked to make
-        this read less wide/more condensed instead, then nudged it back up
-        from an initial 760px try, so it no longer lines up with the bio
-        grid above it). Still mx-auto centered under it, just with visible
-        margin on either side now. */}
-    <section className="mx-auto w-full max-w-[860px] px-4 py-16 sm:py-20">
+        max-w-[1100px] — back to matching the bio grid's own outer width
+        above (went narrower for a bit — 1100 -> 760 -> 860 — chasing "less
+        wide" purely through max-width, but that also shifted this section's
+        own left/right edges in from the bio grid's above it, which read as
+        misaligned rather than just "more condensed"). Now the outer box
+        matches the bio grid again, and the extra breathing room on the
+        sides comes from bigger horizontal padding instead (px-4 -> px-8
+        sm:px-16), so the content narrows without the section itself
+        drifting out of alignment with the frame/text above. */}
+    <section className="mx-auto w-full max-w-[1100px] px-8 py-16 sm:px-16 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
