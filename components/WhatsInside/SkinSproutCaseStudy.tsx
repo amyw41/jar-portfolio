@@ -92,17 +92,37 @@ const PERSONAS: {
   },
 ];
 
-// CHECK: same illegibility issue — only "Aesop" was legible as a brand
-// name in the reference screenshot; the 2nd competitor's name and both
-// cards' notes are placeholder text pending the real copy.
-const COMPETITORS = [
+// Real competitive analysis copy from Amy — Skin Bliss, ACloset, and
+// Incidecoder, the three apps compared in the competitive-analysis.png
+// screenshot collage above (see the Competitive Analysis Row below). Laid
+// out as one row per evaluation criteria (not one card per app) so it
+// renders as an actual comparison table via ComparisonTable, in the same
+// criteria-by-app style as Amy's reference table for Spotify Guessr's own
+// competitive analysis (ca_result.avif).
+const COMPARISON_ROWS: { criteria: string; skinBliss: string; acloset: string; incidecoder: string }[] = [
   {
-    name: "Aesop",
-    notes: "Placeholder notes — swap in real copy.",
+    criteria: "Information hierarchy",
+    skinBliss: "Weak; competing signals, hard to scan",
+    acloset: "Strong; clean and easy to read",
+    incidecoder: "Strong; but dense with raw data",
   },
   {
-    name: "Competitor 2",
-    notes: "Placeholder notes — swap in real copy.",
+    criteria: "Effort to reach value",
+    skinBliss: "Low effort; but the payoff isn't credible",
+    acloset: "High effort; long intake before any payoff",
+    incidecoder: "Low effort; but the payoff isn't personal",
+  },
+  {
+    criteria: "Personalization",
+    skinBliss: "Claims personalization; doesn't show why",
+    acloset: "Personalizes via upfront form",
+    incidecoder: "None; same content for every user",
+  },
+  {
+    criteria: "Trust / transparency",
+    skinBliss: "Low; no reasoning behind match scores",
+    acloset: "Not applicable; not a rec engine",
+    incidecoder: "High on ingredients; low on relevance",
   },
 ];
 
@@ -169,6 +189,49 @@ function StatRow({ stats }: { stats: { stat: string; caption: string }[] }) {
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Criteria-by-app comparison table for the Competitive Analysis row — same
+// visual language as Amy's reference table for Spotify Guessr's own
+// competitive analysis (ca_result.avif): no vertical grid lines, just a
+// heavier rule under the header row and a hairline rule under every data
+// row, generous vertical padding, left-aligned throughout. Every cell — the
+// column headers, the row labels, and the values — shares the same 16px
+// font-body size (2pt down from TEXT.content's 18px, per Amy — sized/built
+// locally rather than reusing TEXT.content directly since that constant is
+// shared site-wide and shouldn't shrink everywhere else it's used), with
+// only weight/color doing the hierarchy (header: medium black, row label:
+// medium black/80, value: light black/60). Header rule lightened from
+// black/70 to black/30 — less harsh than the original near-solid line.
+function ComparisonTable({ rows }: { rows: typeof COMPARISON_ROWS }) {
+  const headingCell = "py-4 font-body text-[16px] font-medium text-black";
+  const valueCell = "py-5 pr-6 align-top font-body text-[16px] font-light leading-relaxed text-black/60 text-left";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] border-collapse text-left">
+        <thead>
+          <tr className="border-b border-black/30">
+            <th className={`${headingCell} pr-6`}>Criteria</th>
+            <th className={`${headingCell} pr-6`}>Skin Bliss</th>
+            <th className={`${headingCell} pr-6`}>ACloset</th>
+            <th className={headingCell}>Incidecoder</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.criteria} className="border-b border-black/10">
+              <td className="w-[180px] py-5 pr-6 align-top font-body text-[16px] font-medium text-black/80">
+                {r.criteria}
+              </td>
+              <td className={valueCell}>{r.skinBliss}</td>
+              <td className={valueCell}>{r.acloset}</td>
+              <td className={`${valueCell} pr-0`}>{r.incidecoder}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -443,19 +506,70 @@ export default function SkinSproutCaseStudy() {
           </div>
         </Row>
 
-        <Row heading="Competitive Analysis">
+        {/* Intro line sits in `children` (beside the "Competitive Analysis"
+            heading, the normal Row layout every other row on this page
+            uses). The screenshot follows via `media`, and the criteria-by-
+            app comparison table goes last via `after`, full-width under the
+            image — swapped in for the earlier pink StatRow box per Amy's
+            request to use a real table instead, styled like her Spotify
+            Guessr competitive-analysis table (see ComparisonTable above). */}
+        <Row
+          heading="Competitive Analysis"
+          media={
+            <CaseStudyImage
+              src="/images/projects/skinsprout/competitive-analysis.png"
+              alt="Competitive analysis screenshots comparing Skin Bliss, ACloset, and Incidecoder"
+              ratio="1542/623"
+              bg={false}
+            />
+          }
+          after={<ComparisonTable rows={COMPARISON_ROWS} />}
+        >
           <p>
             Finally, I needed to understand what the market currently looks like, so I
             conducted some quick competitive analysis!
           </p>
-          <div className="mt-[36px] space-y-4">
-            {COMPETITORS.map((c) => (
-              <div key={c.name} className="rounded-[10px] bg-[#f7f7f7] p-6">
-                <p className="font-body text-[28px] font-medium text-black text-left">{c.name}</p>
-                <p className={`mt-2 ${TEXT.content}`}>{c.notes}</p>
-              </div>
-            ))}
-          </div>
+        </Row>
+
+        <Row heading="The Gap">
+          <p>
+            None of the three apps offer a recommendation users could actually trust
+            with a process that doesn&apos;t feel like work. Skin Bliss is personalized
+            but doesn&apos;t justify any reasoning, so the match score doesn&apos;t earn
+            belief. ACloset is easy to use once you&apos;re in, but requires more effort
+            than most users are willing to give before seeing any payoff. Incidecoder is
+            transparent and informative, but generic. It explains what an ingredient
+            does, not what it does for this person&apos;s skin.
+          </p>
+        </Row>
+
+        <Row heading="What This Meant For My Design">
+          <p>This shaped three priorities going into my own app:</p>
+          <ol className="mt-4 space-y-4">
+            <li className="flex gap-3">
+              <span aria-hidden="true">1.</span>
+              <span>
+                Recommendations needed to be trustworthy. They needed to show their
+                reasoning, not just a score, so users could see <em>why</em> a product
+                was or wasn&apos;t a fit.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span aria-hidden="true">2.</span>
+              <span>
+                Building a user&apos;s profile needed to happen gradually, through a
+                user&apos;s skincare history, so the app gets smarter over time instead
+                of asking for everything up front.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span aria-hidden="true">3.</span>
+              <span>
+                Ingredient-level detail needed to stay tied back to the
+                individual&apos;s skin, not presented as generic reference information.
+              </span>
+            </li>
+          </ol>
         </Row>
 
         <Row
