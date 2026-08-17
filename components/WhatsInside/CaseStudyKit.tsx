@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useAutoPlayInView } from "@/lib/useAutoPlayInView";
@@ -274,6 +275,15 @@ function useActiveSection(ids: string[]) {
 // other over a shared default. font-instrument (serif); the active section
 // (see useActiveSection) gets the site's usual blue accent, same treatment
 // Taskbar's nav links use.
+//
+// Slides in from the left on mount, after CaseStudyHero's own fade/slide-up
+// (see TOC_DELAY below) — reads as "hero settles, then the nav slides in
+// alongside it" rather than everything arriving at once. Both call sites
+// (the sticky desktop sidebar and the mobile inline fallback) get this for
+// free since it lives here, not per call site — same reasoning CaseStudyHero
+// itself already uses for owning HERO_RATIO.
+const TOC_DELAY = 0.35;
+
 function TableOfContents({
   sectionNav,
   className,
@@ -286,7 +296,13 @@ function TableOfContents({
   const activeId = useActiveSection(sectionNav.map((s) => s.id));
 
   return (
-    <nav className={`flex text-left font-instrument text-2xl font-light text-black/60 ${className}`} style={style}>
+    <motion.nav
+      initial={{ opacity: 0, x: -40 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut", delay: TOC_DELAY }}
+      className={`flex text-left font-instrument text-2xl font-light text-black/60 ${className}`}
+      style={style}
+    >
       {sectionNav.map((s) => (
         <a
           key={s.id}
@@ -296,7 +312,7 @@ function TableOfContents({
           {s.label}
         </a>
       ))}
-    </nav>
+    </motion.nav>
   );
 }
 
@@ -312,9 +328,10 @@ function TableOfContents({
 export const HERO_RATIO = "848/636";
 
 // The hero block — title, subtitle, hero image, and the timeline/team/role/
-// skills meta box, rendered as one static unit (no mount animation — a case
-// study page already has a lot of media loading in at once on navigation, so
-// this deliberately doesn't add a fade/slide-up on top of that). Takes the
+// skills meta box, rendered (and animated) as one unit: it fades/slides up
+// together on mount, then TableOfContents's own slide-in-from-left picks up
+// TOC_DELAY seconds later, so opening a case study reads as "hero settles
+// in, then the nav" rather than everything popping in at once. Takes the
 // hero media's own src/alt/video/highlightColor directly (not a pre-built
 // <CaseStudyImage/> node) so this component is the one place HERO_RATIO gets
 // applied — a case study can't accidentally diverge from it the way it could
@@ -337,7 +354,11 @@ export function CaseStudyHero({
   meta: { label: string; values: string[] }[];
 }) {
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <h1 className="font-instrument text-[clamp(2.75rem,7.5vw,4.5rem)] font-normal leading-none tracking-[-0.04em] text-black/90">
         {title}
       </h1>
@@ -371,7 +392,7 @@ export function CaseStudyHero({
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -416,8 +437,9 @@ export function CaseStudyLayout({ sectionNav, children }: { sectionNav: SectionN
           so the two move in sync rather than one snapping ahead of the
           other. */}
       <aside className="hidden lg:sticky lg:top-[var(--taskbar-offset,var(--taskbar-height,4.375rem))] lg:z-10 lg:flex lg:h-[calc(100dvh-var(--taskbar-offset,var(--taskbar-height,4.375rem)))] lg:w-72 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white lg:px-10 lg:py-8 lg:transition-[top,height] lg:duration-300 lg:ease-in-out">
-        {/* No mount animation here — see CaseStudyHero's comment above on
-            why case study pages skip the fade/slide-in other pages use. */}
+        {/* Slide-in-from-left mount animation lives inside TableOfContents
+            itself (see TOC_DELAY there) — shared by this sidebar and the
+            mobile inline fallback below instead of duplicated per call. */}
         <TableOfContents sectionNav={sectionNav} className="flex-col gap-3" />
       </aside>
 
