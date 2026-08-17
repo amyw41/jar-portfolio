@@ -19,6 +19,13 @@ export function useAutoPlayInView<T extends HTMLVideoElement>(threshold = 0.4) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          // Set the IDL property directly, not just relying on the `muted`
+          // JSX attribute — React applies that attribute slightly after
+          // this effect can run, and Chrome's autoplay-policy check reads
+          // the live property at the moment play() is called. Attribute vs.
+          // property lagging out of sync is a known way muted autoplay
+          // silently gets blocked.
+          el.muted = true;
           el.currentTime = 0;
           el.play().catch(() => {
             // Autoplay can still be blocked in some browsers even

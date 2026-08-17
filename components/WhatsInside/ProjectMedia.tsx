@@ -35,34 +35,39 @@ export default function ProjectMedia({
   // Gates the media's own fade-in on it actually being decoded, same fix
   // already used for jar.png in Jar.js — without this, the card's
   // whileInView slide/fade (in Gallery.tsx / Carousel.tsx) fires purely off
-  // scroll position, with no idea whether the image/video underneath has
-  // actually finished loading. That mismatch is what caused the "empty box
-  // then a late pop-in" jump: the card animates into place on schedule, but
+  // scroll position, with no idea whether the image underneath has actually
+  // finished loading. That mismatch is what caused the "empty box then a
+  // late pop-in" jump: the card animates into place on schedule, but
   // slower-loading media just appears whenever it happens to arrive,
   // sometimes well after. Gating opacity on `loaded` means the media only
   // ever becomes visible via its own smooth fade, never a hard pop.
+  //
+  // Image branch only now — see the video branch below for why video
+  // dropped this same gate.
   const [loaded, setLoaded] = useState(false);
 
   return (
     <div className={`relative aspect-[846/635] w-full overflow-hidden rounded-md border border-gray-200 ${className}`}>
       {project.mediaType === "video" ? (
-        // Muted-loop, but no `autoPlay` — see useAutoPlayInView, it starts
-        // this fresh from the beginning once actually scrolled into view
-        // instead of every video on the page trying to play at once on
-        // mount. playsInline keeps it inline (not fullscreen) on iOS,
-        // required for autoplay to work there at all. onLoadedData (not
-        // onLoadedMetadata) — fires once an actual decoded frame is ready
-        // to paint, so the fade-in reveals real video, not a still-black box.
-        <motion.video
+        // Always visible — no fade gated on onLoadedData (unlike the image
+        // branch below). That gate caused a real bug on the live site: it
+        // relied on onLoadedData firing, which only happens once playback
+        // actually starts, but useAutoPlayInView's own play() call silently
+        // swallows any autoplay-block error (`.catch(() => {})`, no console
+        // warning) — so if Chrome ever blocks that autoplay, onLoadedData
+        // never fires and the video sits at opacity 0 forever, invisible,
+        // with nothing in the console to explain why. Muted-loop, but no
+        // `autoPlay` — see useAutoPlayInView, it starts this fresh from the
+        // beginning once actually scrolled into view instead of every video
+        // on the page trying to play at once on mount. playsInline keeps it
+        // inline (not fullscreen) on iOS, required for autoplay to work
+        // there at all.
+        <video
           ref={videoRef}
           src={project.media}
           muted
           loop
           playsInline
-          onLoadedData={() => setLoaded(true)}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: loaded ? 1 : 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
           className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
         />
       ) : (
