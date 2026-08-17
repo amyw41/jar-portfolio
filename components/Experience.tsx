@@ -23,7 +23,7 @@ import FadeImage from "@/components/FadeImage";
 // (one line, not two) so the whole list reads as more compact.
 function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 lg:py-2.5">
+    <div className="flex items-center justify-between gap-4 py-2 lg:py-2">
       <div className="flex items-center gap-4">
         {/* Fixed square, not `fill`-to-row-height — logos come in whatever
             aspect ratio each company's own brand mark is (square icon vs.
@@ -33,12 +33,12 @@ function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
             circle) + no border — softens the square without turning it into
             an avatar-style badge, and at this size doesn't need an outline
             to read as its own distinct shape against the page. */}
-        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[5px] bg-white">
+        <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[5px] bg-white">
           <FadeImage
             src={entry.logo}
             alt={`${entry.company} logo`}
             fill
-            sizes="64px"
+            sizes="56px"
             unoptimized={process.env.NODE_ENV !== "production"}
             className="object-contain"
           />
@@ -69,9 +69,9 @@ export default function Experience() {
   return (
     <div className="w-full text-left">
       {EXPERIENCE.map((group) => (
-        <div key={group.label} className="mt-10 first:mt-0">
+        <div key={group.label} className="mt-8 first:mt-0">
           <h3 className="font-instrument text-[28px] text-black/80">{group.label}</h3>
-          <div className="mt-1 divide-y divide-gray-100">
+          <div className="mt-4 divide-y divide-gray-100">
             {group.entries.map((entry) => (
               <ExperienceRow key={entry.company} entry={entry} />
             ))}
