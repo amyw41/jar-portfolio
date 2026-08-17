@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PORTFOLIO_PROJECTS, type PortfolioProject } from "@/lib/projects";
@@ -23,9 +23,8 @@ const CARD_VARIANTS = {
   visible: { opacity: 1, y: 0 },
 };
 
-function GalleryCard({ project }: { project: PortfolioProject }) {
+function GalleryCard({ project, onNavigate }: { project: PortfolioProject; onNavigate: () => void }) {
   const [hovered, setHovered] = useState(false);
-  const router = useRouter();
 
   return (
     // div with role="button", not an actual <button> — matches Carousel's
@@ -33,11 +32,11 @@ function GalleryCard({ project }: { project: PortfolioProject }) {
     // semantics (click + Enter/Space activation, tab stop).
     <motion.div
       role="button"
-      onClick={() => router.push(`/projects/${project.id}`)}
+      onClick={onNavigate}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          router.push(`/projects/${project.id}`);
+          onNavigate();
         }
       }}
       onMouseEnter={() => setHovered(true)}
@@ -77,34 +76,66 @@ function GalleryCard({ project }: { project: PortfolioProject }) {
 }
 
 export default function Gallery() {
+  const router = useRouter();
+  // Same reasoning as the "/etc" plate page (see app/etc/page.tsx's own
+  // exitHref): Next.js unmounts this grid the instant a navigation fires,
+  // with no chance to play an exit animation — so clicking a card instead
+  // stores which project it was headed to, lets the grid fade+slide up, and
+  // only navigates once that animation actually finishes.
+  const [exitId, setExitId] = useState<string | null>(null);
+
+  // Kicks off prefetching every case-study route as soon as the grid mounts
+  // — same as the plate page's own router.prefetch loop — so the 0.18s exit
+  // below has something fast to land on instead of masking a slow first
+  // compile in dev.
+  useEffect(() => {
+    for (const project of PORTFOLIO_PROJECTS) {
+      router.prefetch(`/projects/${project.id}`);
+    }
+  }, [router]);
+
   return (
-    // w-[90.87%] + max-w-[1374px]: at Amy's 1512px reference viewport,
-    // 90.87% of 1512 ≈ 1374px, so the two constraints meet exactly there —
-    // below that width the grid scales down proportionally with the
-    // viewport; above it, the max-w cap holds it at 1374px instead of
-    // growing unbounded. This is now the *only* thing driving Gallery's
-    // width — nothing above it in WhatsInside/index.tsx overrides it, so
-    // this cap is actually reachable on a wide monitor instead of being
-    // trapped inside Carousel's smaller shared wrapper (the bug this
-    // "fix portfolio responsiveness" prompt exists to fix). gap-[50px]
-    // (both axes) + 2 columns is what makes each card's media land on
-    // exactly 662px wide at that reference width: (1374 - 50) / 2 = 662;
-    // ProjectMedia's own 846:635 ratio then sets each card's height from
-    // that width. grid-cols-1 sm:grid-cols-2
-    // — 2 columns is the ceiling at every width, no lg:grid-cols-3 tier.
-    // initial/whileInView live here now, not per-card — the grid as a whole
-    // is what the viewport check watches, so the trigger fires once based
-    // on the group's own position and every card (via CARD_VARIANTS
-    // inheritance) animates in on the same frame.
+    // Outer wrapper owns only the exit fade/slide — kept separate from the
+    // inner grid's own scroll-triggered entrance (initial/whileInView
+    // below) so the two animations never fight over the same `animate`
+    // prop. initial={false}: this wrapper has nothing to animate in on its
+    // own mount, only out, so it should just sit at rest until exitId flips.
     <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.3 }}
-      className="mx-auto grid w-[90.87%] max-w-[1374px] grid-cols-1 gap-[50px] sm:grid-cols-2"
+      initial={false}
+      animate={{ opacity: exitId ? 0 : 1, y: exitId ? -16 : 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      onAnimationComplete={() => {
+        if (exitId) router.push(`/projects/${exitId}`);
+      }}
     >
-      {PORTFOLIO_PROJECTS.map((project) => (
-        <GalleryCard key={project.id} project={project} />
-      ))}
+      {/* w-[90.87%] + max-w-[1374px]: at Amy's 1512px reference viewport,
+        90.87% of 1512 ≈ 1374px, so the two constraints meet exactly there —
+        below that width the grid scales down proportionally with the
+        viewport; above it, the max-w cap holds it at 1374px instead of
+        growing unbounded. This is now the *only* thing driving Gallery's
+        width — nothing above it in WhatsInside/index.tsx overrides it, so
+        this cap is actually reachable on a wide monitor instead of being
+        trapped inside Carousel's smaller shared wrapper (the bug this
+        "fix portfolio responsiveness" prompt exists to fix). gap-[50px]
+        (both axes) + 2 columns is what makes each card's media land on
+        exactly 662px wide at that reference width: (1374 - 50) / 2 = 662;
+        ProjectMedia's own 846:635 ratio then sets each card's height from
+        that width. grid-cols-1 sm:grid-cols-2
+        — 2 columns is the ceiling at every width, no lg:grid-cols-3 tier.
+        initial/whileInView live here now, not per-card — the grid as a whole
+        is what the viewport check watches, so the trigger fires once based
+        on the group's own position and every card (via CARD_VARIANTS
+        inheritance) animates in on the same frame. */}
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        className="mx-auto grid w-[90.87%] max-w-[1374px] grid-cols-1 gap-[50px] sm:grid-cols-2"
+      >
+        {PORTFOLIO_PROJECTS.map((project) => (
+          <GalleryCard key={project.id} project={project} onNavigate={() => setExitId(project.id)} />
+        ))}
+      </motion.div>
     </motion.div>
   );
 }
