@@ -139,16 +139,14 @@ export default function NotesPage() {
         the bio section above), on purpose: the bio section above is sized
         to fit exactly one viewport (min-height: AVAILABLE_HEIGHT, see its
         own comment), and this needing real vertical room of its own to lay
-        out (wide rows, big screen — see ExperienceRow) would fight that if
-        it lived inside the same flex column. As two independent sections
-        instead, the bio still reads as its own complete "first screen" and
-        this reads as a clearly separate second one below it, not a
-        continuation competing for the same space.
+        out (Work/Community side by side at lg+ — see Experience.tsx) would
+        fight that if it lived inside the same flex column. As two
+        independent sections instead, the bio still reads as its own
+        complete "first screen" and this reads as a clearly separate second
+        one below it, not a continuation competing for the same space.
         max-w-[1100px]/px-4 — deliberately the same container the bio grid
-        above uses, so each row's logo (left) and date (right, at lg+, see
-        ExperienceRow) line up with the photo's own left edge and the bio
-        text box's own right edge above, rather than reading as a
-        differently-aligned block. */}
+        above uses, so this reads as the same width as the bio content
+        above it rather than a differently-aligned block. */}
     <section className="mx-auto w-full max-w-[1100px] px-4 py-16 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
