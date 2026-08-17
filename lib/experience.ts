@@ -1,7 +1,8 @@
-// Work/community history shown in the homepage's "Experience" view (see
-// components/WhatsInside/Experience.tsx) — replaces the old Carousel view,
-// which showed the same creative PORTFOLIO_PROJECTS as Gallery just in a
-// different layout. This is genuinely different content (real past
+// Work/community history shown on the About page, below the bio (see
+// components/Experience.tsx). Originally shown in a toggle on the
+// homepage's "What's inside?" section, replacing the old Carousel view
+// there — moved to the About page once that toggle was removed. Genuinely
+// different content from the homepage's own portfolio grid (real past
 // roles, not creative projects), so it gets its own small data file
 // instead of reusing lib/projects.ts.
 export type ExperienceEntry = {

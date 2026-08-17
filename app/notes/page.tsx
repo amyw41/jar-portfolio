@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { SOCIAL_LINKS } from "@/lib/social";
 import FadeImage from "@/components/FadeImage";
+import Experience from "@/components/Experience";
 
 const SLIDE_UP_DURATION = 0.35;
 
@@ -130,6 +131,23 @@ export default function NotesPage() {
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Work/community history — used to live behind a Gallery/Experience
+          toggle on the homepage (see WhatsInside/index.tsx's own git
+          history for that); moved here instead, right below the bio, once
+          that toggle was removed. Centered on its own (not part of the grid
+          above), slightly delayed so it reads as a second beat after the
+          bio settles rather than everything landing at once. This section
+          no longer fits one viewport once this is added — expected, it's
+          new content, not a regression of the bio's own one-viewport fit. */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut", delay: 0.1 }}
+        className="mt-16 sm:mt-20"
+      >
+        <Experience />
       </motion.div>
     </section>
   );
