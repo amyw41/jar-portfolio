@@ -276,13 +276,12 @@ function useActiveSection(ids: string[]) {
 // (see useActiveSection) gets the site's usual blue accent, same treatment
 // Taskbar's nav links use.
 //
-// Slides in from the left on mount, after CaseStudyHero's own fade/slide-up
-// (see TOC_DELAY below) — reads as "hero settles, then the nav slides in
-// alongside it" rather than everything arriving at once. Both call sites
-// (the sticky desktop sidebar and the mobile inline fallback) get this for
-// free since it lives here, not per call site — same reasoning CaseStudyHero
+// Slides in from the left on mount, in step with CaseStudyHero's own
+// fade/slide-up (no delay — both start together). Both call sites (the
+// sticky desktop sidebar and the mobile inline fallback) get this for free
+// since it lives here, not per call site — same reasoning CaseStudyHero
 // itself already uses for owning HERO_RATIO.
-const TOC_DELAY = 0.35;
+const TOC_DELAY = 0;
 
 function TableOfContents({
   sectionNav,
@@ -329,9 +328,9 @@ export const HERO_RATIO = "848/636";
 
 // The hero block — title, subtitle, hero image, and the timeline/team/role/
 // skills meta box, rendered (and animated) as one unit: it fades/slides up
-// together on mount, then TableOfContents's own slide-in-from-left picks up
-// TOC_DELAY seconds later, so opening a case study reads as "hero settles
-// in, then the nav" rather than everything popping in at once. Takes the
+// on mount in step with TableOfContents's own slide-in-from-left (see
+// TOC_DELAY there), so opening a case study reads as everything arriving
+// together rather than one piece settling before the next. Takes the
 // hero media's own src/alt/video/highlightColor directly (not a pre-built
 // <CaseStudyImage/> node) so this component is the one place HERO_RATIO gets
 // applied — a case study can't accidentally diverge from it the way it could
