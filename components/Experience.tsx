@@ -45,7 +45,11 @@ function ExperienceRow({ entry }: { entry: ExperienceEntry }) {
         </div>
         <div className="text-left">
           <p className="font-body text-lg text-black/90">
-            <span className="font-medium">{entry.company}</span>{" "}
+            {/* Company name lightened from black/90 to black/70 — was
+                reading as too heavy/bold-dark next to the already-light
+                title (black/60) and date (black/50); still the darkest of
+                the three so it keeps its place as the row's anchor text. */}
+            <span className="font-medium text-black/70">{entry.company}</span>{" "}
             <span className="text-black/60">— {entry.title}</span>
           </p>
           {/* Date stacked here below lg only — at lg+ it moves to the
