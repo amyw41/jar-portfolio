@@ -29,6 +29,7 @@ const PARAGRAPH_CLASS =
 
 export default function NotesPage() {
   return (
+    <>
     <section
       className="mx-auto flex w-full max-w-[1100px] flex-col justify-center px-4 py-3"
       style={{ minHeight: AVAILABLE_HEIGHT }}
@@ -132,23 +133,32 @@ export default function NotesPage() {
           </div>
         </div>
       </motion.div>
+    </section>
 
-      {/* Work/community history — used to live behind a Gallery/Experience
-          toggle on the homepage (see WhatsInside/index.tsx's own git
-          history for that); moved here instead, right below the bio, once
-          that toggle was removed. Centered on its own (not part of the grid
-          above), slightly delayed so it reads as a second beat after the
-          bio settles rather than everything landing at once. This section
-          no longer fits one viewport once this is added — expected, it's
-          new content, not a regression of the bio's own one-viewport fit. */}
+    {/* Work/community history — its own separate section (not nested inside
+        the bio section above), on purpose: the bio section above is sized
+        to fit exactly one viewport (min-height: AVAILABLE_HEIGHT, see its
+        own comment), and this needing real vertical room of its own to lay
+        out (wide rows, big screen — see ExperienceRow) would fight that if
+        it lived inside the same flex column. As two independent sections
+        instead, the bio still reads as its own complete "first screen" and
+        this reads as a clearly separate second one below it, not a
+        continuation competing for the same space.
+        max-w-[1100px]/px-4 — deliberately the same container the bio grid
+        above uses, so each row's logo (left) and date (right, at lg+, see
+        ExperienceRow) line up with the photo's own left edge and the bio
+        text box's own right edge above, rather than reading as a
+        differently-aligned block. */}
+    <section className="mx-auto w-full max-w-[1100px] px-4 py-16 sm:py-20">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut", delay: 0.1 }}
-        className="mt-16 sm:mt-20"
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: SLIDE_UP_DURATION, ease: "easeOut" }}
       >
         <Experience />
       </motion.div>
     </section>
+    </>
   );
 }
